@@ -90,14 +90,29 @@ async function fetchWithRetry(
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
-    const prompt = formData.get("prompt") as string;
-    const model = formData.get("model") as string | null;
+    let prompt = formData.get("prompt") as string;
+    let model = formData.get("model") as string | null;
     const width = parseInt(formData.get("width") as string) || 1024;
     const height = parseInt(formData.get("height") as string) || 1024;
     const quality = formData.get("quality") as string;
     const orientation = formData.get("orientation") as string;
     const image = formData.get("image") as File | null;
     const image_2 = formData.get("image_2") as File | null;
+    const refImageUrlHeader = formData.get("ref_image_url") as string | null;
+    const faceMode = formData.get("face_mode") === "true";
+
+    // @face mention — inject Chinese face-lock + force Seedream 5.0
+    // Face reference can be: local file (image_2) OR gallery URL (ref_image_url)
+    const hasFaceRef = !!(image_2 || refImageUrlHeader);
+    if (faceMode && hasFaceRef) {
+      prompt = prompt.replace(/@face\b/gi, "").trim();
+      prompt = `[参考图1为目标人物照片，必须严格还原其身份特征]\n高度保持参考图1中人物的面部特征：面部骨骼结构、眼型、鼻梁高低、唇形、肤色、肤质纹理、脸型宽窄均不可改变，生成图中人物必须与参考图1为同一人物，绝对不能更换人脸。\n场景描述：${prompt}`;
+      if (!model || (!model.includes("seedream-5") && !model.includes("5-0"))) {
+        model = "doubao-seedream-5-0-260128";
+      }
+      const faceSource = image_2 ? `file ${(image_2.size/1024).toFixed(0)}KB` : `url ${refImageUrlHeader?.slice(0, 60)}`;
+      console.log(`[API /generate] @face mode, model: ${model}, faceRef: ${faceSource}`);
+    }
 
     if (!prompt) {
       return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
@@ -176,22 +191,41 @@ export async function POST(request: NextRequest) {
         }
 
         // Image(s) for I2I — upload to temp URL (more reliable than base64)
-        if (image && image_2) {
+        // When faceMode: face reference (image_2 or refImageUrlHeader) goes FIRST → it becomes 图片1 in prompt
+        // Build the ordered image list
+        const faceFile = image_2;          // user-uploaded face photo (local file)
+        const styleFile = image;           // style/composition reference (slot 1)
+
+        let resolvedFaceUrl: string | null = refImageUrlHeader; // gallery URL (already a URL)
+        let resolvedStyleUrl: string | null = null;
+
+        // Upload local files to get URLs
+        const uploadFile = async (file: File): Promise<string> => {
           try {
-            const [url_1, url_2] = await Promise.all([uploadToTempUrl(image), uploadToTempUrl(image_2)]);
-            payload.image = [url_1, url_2];
+            return await uploadToTempUrl(file);
           } catch {
-            console.warn("[API /generate] Temp upload failed, falling back to base64");
-            const [b64_1, b64_2] = await Promise.all([fileToBase64(image), fileToBase64(image_2)]);
-            payload.image = [b64_1, b64_2];
+            console.warn("[API /generate] Temp upload failed, using base64");
+            return await fileToBase64(file);
           }
-        } else if (image) {
-          try {
-            payload.image = await uploadToTempUrl(image);
-          } catch {
-            console.warn("[API /generate] Temp upload failed, falling back to base64");
-            payload.image = await fileToBase64(image);
-          }
+        };
+
+        if (faceFile) resolvedFaceUrl = await uploadFile(faceFile);
+        if (styleFile) resolvedStyleUrl = await uploadFile(styleFile);
+
+        // Build payload.image: face reference goes first when faceMode, style image first otherwise
+        if (resolvedFaceUrl && resolvedStyleUrl) {
+          payload.image = faceMode
+            ? [resolvedFaceUrl, resolvedStyleUrl]   // face 图片1, style 图片2
+            : [resolvedStyleUrl, resolvedFaceUrl];  // style 图片1, face 图片2
+        } else if (resolvedFaceUrl) {
+          payload.image = resolvedFaceUrl;
+        } else if (resolvedStyleUrl) {
+          payload.image = resolvedStyleUrl;
+        }
+
+        if (payload.image) {
+          const imgCount = Array.isArray(payload.image) ? payload.image.length : 1;
+          console.log(`[API /generate] ${imgCount} image(s) attached to payload`);
         }
       }
 

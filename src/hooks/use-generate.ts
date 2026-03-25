@@ -9,7 +9,8 @@ import type {
 import { SEEDREAM_MODEL_NAMES } from "@/lib/models";
 import { toast } from "sonner";
 
-/** Resize, crop, and compress File to exactly the target width × height as JPEG */
+/** Resize, crop, and compress File to exactly the target width × height as JPEG.
+ * Only used for style/composition reference images (image slot 1). */
 async function processImageToExactSizeAndFormat(file: File, width: number, height: number): Promise<File> {
   return new Promise((resolve) => {
     const img = new Image();
@@ -44,6 +45,44 @@ async function processImageToExactSizeAndFormat(file: File, width: number, heigh
       }, "image/jpeg", 0.85);
     };
     img.onerror = () => resolve(file); // fallback if parsing fails
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+/** Compress face reference image while PRESERVING original aspect ratio.
+ * DO NOT resize to output dimensions — that destroys face proportions.
+ * Max 1024px on longest side, high quality (0.92) to keep facial detail. */
+async function compressFaceImage(file: File): Promise<File> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 1024;
+      let { width, height } = img;
+      // Downscale if larger than MAX, keeping aspect ratio
+      if (width > MAX || height > MAX) {
+        if (width > height) {
+          height = Math.round((height / width) * MAX);
+          width = MAX;
+        } else {
+          width = Math.round((width / height) * MAX);
+          height = MAX;
+        }
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { resolve(file); return; }
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob((blob) => {
+        if (blob) {
+          resolve(new File([blob], "face_ref.jpg", { type: "image/jpeg" }));
+        } else {
+          resolve(file);
+        }
+      }, "image/jpeg", 0.92); // Higher quality for face detail
+    };
+    img.onerror = () => resolve(file);
     img.src = URL.createObjectURL(file);
   });
 }
@@ -200,8 +239,16 @@ export function useGenerate(options?: UseGenerateOptions): UseGenerateReturn {
           formData.append("image", processed1);
         }
         if (params.image_2) {
-          const processed2 = await processImageToExactSizeAndFormat(params.image_2, params.width, params.height);
+          // Face reference: preserve aspect ratio, do NOT resize to output dimensions
+          const processed2 = await compressFaceImage(params.image_2);
           formData.append("image_2", processed2);
+        }
+        if (params.ref_image_url) {
+          // Gallery URL — backend fetches it server-side (avoids browser CORS)
+          formData.append("ref_image_url", params.ref_image_url);
+        }
+        if (params.faceMode) {
+          formData.append("face_mode", "true");
         }
 
         if (isSeedream) {

@@ -62,7 +62,7 @@ export function FloatingBottomBar({
         ? "left-[calc(50%-40px)]"
         : "left-1/2 md:left-[calc(50%+130px)]"
     )} suppressHydrationWarning>
-      <div className="relative flex items-center gap-6 px-5 py-2.5 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-xl rounded-full shadow-xl" suppressHydrationWarning>
+      <div className="relative flex items-center gap-6 px-5 py-2.5 bg-card/80 dark:bg-card/80 backdrop-blur-xl rounded-full shadow-xl border border-border/30" suppressHydrationWarning>
         {navItems.map((item, index) => (
           <div
             key={item.label}
@@ -75,7 +75,7 @@ export function FloatingBottomBar({
             <div
               suppressHydrationWarning
               className={cn(
-                "absolute -top-10 left-1/2 -translate-x-1/2 px-2.5 py-1 bg-black text-white text-[11px] font-medium rounded-md whitespace-nowrap pointer-events-none transition-all duration-200",
+                "absolute -top-10 left-1/2 -translate-x-1/2 px-2.5 py-1 bg-foreground text-background text-[11px] font-medium rounded-md whitespace-nowrap pointer-events-none transition-all duration-200",
                 hoveredIndex === index
                   ? "opacity-100 translate-y-0"
                   : "opacity-0 translate-y-1"
@@ -83,7 +83,7 @@ export function FloatingBottomBar({
             >
               {item.label}
               {/* Arrow */}
-              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-black rotate-45" suppressHydrationWarning />
+              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-foreground rotate-45" suppressHydrationWarning />
             </div>
 
             {/* Icon button */}
@@ -92,8 +92,8 @@ export function FloatingBottomBar({
               className={cn(
                 "flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200",
                 isActive(item)
-                  ? "bg-black/5 text-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-black/5"
+                  ? "bg-primary/10 text-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
               )}
             >
               <item.icon className="w-[20px] h-[20px]" strokeWidth={isActive(item) ? 2 : 1.6} />

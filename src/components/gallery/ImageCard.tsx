@@ -61,6 +61,11 @@ export function ImageCard({ prompt, onClick, priority = false }: ImageCardProps)
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={onClick}
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData("text/meigen-image-url", prompt.image);
+        e.dataTransfer.effectAllowed = "copy";
+      }}
       suppressHydrationWarning
     >
       {inView ? (

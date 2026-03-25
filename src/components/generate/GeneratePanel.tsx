@@ -70,8 +70,93 @@ export function GeneratePanel({ open, mode, prompt, onClose, onGenerationStart, 
   const [uploadedImage2, setUploadedImage2] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imagePreview2, setImagePreview2] = useState<string | null>(null);
+  // Gallery URL for face reference (avoids CORS when dragging gallery images)
+  const [refImageUrl, setRefImageUrl] = useState<string | null>(null);
   const fileInput1Ref = useRef<HTMLInputElement>(null);
   const fileInput2Ref = useRef<HTMLInputElement>(null);
+
+  // Describe-on-drop state
+  const [isDescribing, setIsDescribing] = useState(false);
+  const [describePreview, setDescribePreview] = useState<string | null>(null);
+  const promptRef = useRef<HTMLTextAreaElement>(null);
+
+  // Enhance prompt state
+  const [isEnhancing, setIsEnhancing] = useState(false);
+  const [enhanceStyle, setEnhanceStyle] = useState<"realistic" | "anime" | "illustration">("realistic");
+
+  /** Auto-describe: called when gallery image is dropped into Describe slot */
+  const handleAutoDescribe = useCallback(async (imageUrl: string) => {
+    setIsDescribing(true);
+    setDescribePreview(imageUrl);
+    try {
+      const res = await fetch("/api/describe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageUrl }),
+      });
+      if (!res.ok) throw new Error();
+      const { description } = await res.json();
+      if (description) setPromptText(description);
+    } catch {
+      // silently fail — user can type prompt manually
+    } finally {
+      setIsDescribing(false);
+    }
+  }, [setPromptText]);
+
+  /** Handle gallery image drop onto Describe slot */
+  const handleDescribeDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    const imageUrl = e.dataTransfer.getData("text/meigen-image-url");
+    if (imageUrl) {
+      handleAutoDescribe(imageUrl);
+    }
+  }, [handleAutoDescribe]);
+
+  /** Enhance prompt using MeiGen system prompts */
+  const handleEnhance = useCallback(async () => {
+    if (!promptText.trim() || isEnhancing) return;
+    setIsEnhancing(true);
+    try {
+      const res = await fetch("/api/enhance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: promptText, style: enhanceStyle }),
+      });
+      if (!res.ok) throw new Error();
+      const { enhanced } = await res.json();
+      if (enhanced) setPromptText(enhanced);
+    } catch {
+      // silently fail
+    } finally {
+      setIsEnhancing(false);
+    }
+  }, [promptText, enhanceStyle, isEnhancing, setPromptText]);
+
+  /** Insert text at cursor position in prompt textarea */
+  const insertMention = useCallback((tag: string) => {
+    const el = promptRef.current;
+    if (!el) {
+      setPromptText((prev) => prev ? `${prev} ${tag}` : tag);
+      return;
+    }
+    const start = el.selectionStart ?? el.value.length;
+    const end = el.selectionEnd ?? el.value.length;
+    const before = el.value.slice(0, start);
+    const after = el.value.slice(end);
+    const needsSpace = before.length > 0 && !before.endsWith(" ");
+    const newText = `${before}${needsSpace ? " " : ""}${tag} ${after}`;
+    setPromptText(newText);
+    // Restore cursor after tag
+    setTimeout(() => {
+      if (el) {
+        const pos = start + (needsSpace ? 1 : 0) + tag.length + 1;
+        el.focus();
+        el.setSelectionRange(pos, pos);
+      }
+    }, 0);
+  }, [setPromptText]);
+
 
   const handleStart = useCallback(
     (taskId: string, params: GenerateParams) => {
@@ -125,6 +210,26 @@ export function GeneratePanel({ open, mode, prompt, onClose, onGenerationStart, 
     }
   }, []);
 
+  /** Handle gallery image dragged into Reference slot — store URL only (no CORS fetch) */
+  const handleRefGalleryDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    const imageUrl = e.dataTransfer.getData("text/meigen-image-url");
+    if (imageUrl) {
+      // Store URL directly — backend will fetch it server-side (no CORS issue)
+      setRefImageUrl(imageUrl);
+      setImagePreview2(imageUrl);   // use URL as preview
+      setUploadedImage2(null);      // no local file
+      return;
+    }
+    // Fallback: local file drop from OS
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      handleFileUpload(file, 2);
+      setRefImageUrl(null);         // local file, no URL needed
+    }
+  }, [handleFileUpload]);
+
+
   const handleDrop = useCallback(
     (e: React.DragEvent, slot: 1 | 2) => {
       e.preventDefault();
@@ -142,6 +247,10 @@ export function GeneratePanel({ open, mode, prompt, onClose, onGenerationStart, 
     const size = getSizeForModel(selectedModel.apiName, aspectRatio);
     const orientation = size.height > size.width ? "portrait" : "landscape";
 
+    // @face: needs reference image in slot 2 (Face / Reference slot)
+    const hasFaceMention = /@face\b/i.test(promptText);
+    const hasRefImage = !!uploadedImage2 || !!refImageUrl;
+
     // Navigate to History immediately to see progress
     onNavigateHistory?.();
 
@@ -154,8 +263,12 @@ export function GeneratePanel({ open, mode, prompt, onClose, onGenerationStart, 
       orientation,
       image: uploadedImage || undefined,
       image_2: uploadedImage2 || undefined,
+      ref_image_url: refImageUrl || undefined,
+      // faceMode: @face in prompt AND reference face image available (file OR gallery URL)
+      faceMode: hasFaceMention && hasRefImage,
     });
   };
+
 
   if (!open) return null;
 
@@ -201,67 +314,77 @@ export function GeneratePanel({ open, mode, prompt, onClose, onGenerationStart, 
           {/* Scrollable middle content */}
           <ScrollArea className="flex-1 overflow-hidden">
             <div className="space-y-4 px-5 pb-4">
-              {/* Describe Image section */}
+              {/* Describe Image section — gallery drag only */}
               <div
-                onDrop={(e) => handleDrop(e, 1)}
-                onDragOver={(e) => e.preventDefault()}
-                onClick={() => fileInput1Ref.current?.click()}
-                className="flex items-center gap-3 p-3 rounded-xl border border-dashed border-border hover:border-foreground/30 transition-colors cursor-pointer group"
+                onDrop={handleDescribeDrop}
+                onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "copy"; }}
+                className={cn(
+                  "flex items-center gap-3 p-3 rounded-xl border border-dashed transition-colors",
+                  isDescribing
+                    ? "border-amber-400 bg-amber-50/50 dark:bg-amber-950/20"
+                    : describePreview
+                      ? "border-green-400 bg-green-50/50 dark:bg-green-950/20"
+                      : "border-border hover:border-foreground/30 cursor-grab"
+                )}
               >
-                <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0 group-hover:bg-muted/80 transition-colors">
-                  <Upload className="w-4 h-4 text-muted-foreground" />
+                <div className={cn(
+                  "w-9 h-9 rounded-lg flex items-center justify-center shrink-0",
+                  describePreview ? "bg-green-100 dark:bg-green-900/40" : "bg-muted"
+                )}>
+                  {isDescribing ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-amber-500" />
+                  ) : describePreview ? (
+                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  ) : (
+                    <Sparkles className="w-4 h-4 text-muted-foreground" />
+                  )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[13px] font-medium">Describe Image</p>
-                  <p className="text-[11px] text-muted-foreground">Drop image to generate a prompt</p>
+                  <p className="text-[13px] font-medium">
+                    {isDescribing ? "Analyzing image..." : describePreview ? "Prompt generated" : "Describe Image"}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {isDescribing ? "AI is analyzing your image" : describePreview ? "Prompt has been auto-filled" : "Drag image from gallery to generate prompt"}
+                  </p>
                 </div>
-                {(imagePreview || (prompt && mode === "ref")) && (
-                  <div className="w-9 h-9 rounded-lg overflow-hidden shrink-0 relative group/ref">
-                    <Image
-                      src={imagePreview || prompt?.image || ""}
-                      alt="ref"
-                      width={36}
-                      height={36}
-                      unoptimized
-                      className="w-full h-full object-cover"
-                    />
+                {describePreview && (
+                  <div className="relative w-9 h-9 rounded-lg overflow-hidden shrink-0 group/desc">
+                    <Image src={describePreview} alt="described" width={36} height={36} unoptimized className="w-full h-full object-cover" />
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setUploadedImage(null);
-                        setImagePreview(null);
-                      }}
-                      className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover/ref:opacity-100 transition-opacity"
+                      onClick={() => { setDescribePreview(null); setPromptText(""); }}
+                      className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover/desc:opacity-100 transition-opacity"
                     >
                       <X className="w-3 h-3 text-white" />
                     </button>
                   </div>
                 )}
-                <input
-                  ref={fileInput1Ref}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) handleFileUpload(f, 1);
-                  }}
-                />
               </div>
 
-              {/* Reference Image section */}
+              {/* Reference / Face slot — accepts file upload OR gallery drag */}
               <div
-                onDrop={(e) => handleDrop(e, 2)}
-                onDragOver={(e) => e.preventDefault()}
+                onDrop={handleRefGalleryDrop}
+                onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "copy"; }}
                 onClick={() => fileInput2Ref.current?.click()}
-                className="flex items-center gap-3 p-3 rounded-xl border border-dashed border-border hover:border-foreground/30 transition-colors cursor-pointer group"
+                className={cn(
+                  "flex items-center gap-3 p-3 rounded-xl border border-dashed transition-colors cursor-pointer group",
+                  imagePreview2
+                    ? "border-violet-400 bg-violet-50/50 dark:bg-violet-950/20"
+                    : "border-border hover:border-foreground/30"
+                )}
               >
-                <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0 group-hover:bg-muted/80 transition-colors">
-                  <ImageIcon className="w-4 h-4 text-muted-foreground" />
+                <div className={cn(
+                  "w-9 h-9 rounded-lg flex items-center justify-center shrink-0",
+                  imagePreview2 ? "bg-violet-100 dark:bg-violet-900/40" : "bg-muted group-hover:bg-muted/80"
+                )}>
+                  <ImageIcon className={cn("w-4 h-4", imagePreview2 ? "text-violet-500" : "text-muted-foreground")} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[13px] font-medium">Drop or upload reference</p>
-                  <p className="text-[11px] text-muted-foreground">optional</p>
+                  <p className="text-[13px] font-medium">
+                    {imagePreview2 ? "Face reference set" : "Face / Reference"}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {imagePreview2 ? "Add @face in prompt to preserve identity" : "Upload or drag face photo — required for @face"}
+                  </p>
                 </div>
                 {imagePreview2 ? (
                   <div className="w-9 h-9 rounded-lg overflow-hidden shrink-0 relative group/ref">
@@ -306,27 +429,112 @@ export function GeneratePanel({ open, mode, prompt, onClose, onGenerationStart, 
               {/* Prompt section */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-[13px] font-semibold">Prompt</p>
-                  <button className="p-1 rounded-md hover:bg-muted transition-colors">
-                    <Sparkles className="w-3.5 h-3.5 text-muted-foreground" />
+                  <div className="flex items-center gap-2">
+                    <p className="text-[13px] font-semibold">Prompt</p>
+                    {/* Style selector */}
+                    <select
+                      value={enhanceStyle}
+                      onChange={(e) => setEnhanceStyle(e.target.value as "realistic" | "anime" | "illustration")}
+                      className="text-[10px] bg-muted border-0 rounded-md px-1.5 py-0.5 text-muted-foreground focus:ring-1 focus:ring-foreground/20"
+                    >
+                      <option value="realistic">Realistic</option>
+                      <option value="anime">Anime</option>
+                      <option value="illustration">Illustration</option>
+                    </select>
+                  </div>
+                  <button
+                    onClick={handleEnhance}
+                    disabled={!promptText.trim() || isEnhancing}
+                    className="p-1 rounded-md hover:bg-muted transition-colors disabled:opacity-30"
+                    title="Enhance prompt with AI"
+                  >
+                    {isEnhancing ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />
+                    ) : (
+                      <Sparkles className="w-3.5 h-3.5 text-muted-foreground" />
+                    )}
                   </button>
                 </div>
                 <div className="relative">
+                  {/* Analyzing overlay shown while auto-describing */}
+                  {isDescribing && (
+                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 rounded-xl bg-background/80 backdrop-blur-sm border border-border">
+                      <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                      <p className="text-[12px] text-muted-foreground">Analyzing image...</p>
+                    </div>
+                  )}
+                  {/* Enhancing overlay */}
+                  {isEnhancing && (
+                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 rounded-xl bg-background/80 backdrop-blur-sm border border-violet-500/30 dark:border-violet-500/30">
+                      <Loader2 className="w-5 h-5 animate-spin text-violet-500" />
+                      <p className="text-[12px] text-violet-600 dark:text-violet-400">Enhancing prompt...</p>
+                    </div>
+                  )}
                   <Textarea
+                    ref={promptRef}
                     value={promptText}
                     onChange={(e) => setPromptText(e.target.value)}
-                    placeholder="Describe what you want to generate..."
+                    placeholder={isDescribing ? "" : "Describe what you want to generate... or drop an image above"}
                     className="min-h-[180px] max-h-[300px] resize-none text-[13px] leading-relaxed rounded-xl border-border focus-visible:ring-1 focus-visible:ring-foreground/20 p-3"
                   />
                   {/* Enhance + action icons */}
                   <div className="flex items-center justify-end gap-1.5 mt-1.5">
-                    <button className="flex items-center gap-1 px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground rounded-md hover:bg-muted transition-colors">
-                      <Sparkles className="w-3 h-3" />
-                      Enhance
+                    <button
+                      onClick={handleEnhance}
+                      disabled={!promptText.trim() || isEnhancing}
+                      className="flex items-center gap-1 px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground rounded-md hover:bg-muted transition-colors disabled:opacity-30"
+                    >
+                      {isEnhancing ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <Sparkles className="w-3 h-3" />
+                      )}
+                      {isEnhancing ? "Enhancing..." : "Enhance"}
                     </button>
                   </div>
                 </div>
+
+                {/* @mention chips — shown when reference images are uploaded */}
+                {(uploadedImage || uploadedImage2) && (
+                  <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                    <span className="text-[10px] text-muted-foreground">Mention:</span>
+                    {uploadedImage && (
+                      <button
+                        onClick={() => insertMention("@image1")}
+                        className="flex items-center gap-1 px-2 py-0.5 rounded-full border border-border text-[11px] hover:bg-muted transition-colors"
+                      >
+                        <div className="w-3.5 h-3.5 rounded-sm overflow-hidden">
+                          <Image src={imagePreview!} alt="" width={14} height={14} unoptimized className="w-full h-full object-cover" />
+                        </div>
+                        @image1
+                      </button>
+                    )}
+                    {uploadedImage2 && (
+                      <button
+                        onClick={() => insertMention("@image2")}
+                        className="flex items-center gap-1 px-2 py-0.5 rounded-full border border-border text-[11px] hover:bg-muted transition-colors"
+                      >
+                        <div className="w-3.5 h-3.5 rounded-sm overflow-hidden">
+                          <Image src={imagePreview2!} alt="" width={14} height={14} unoptimized className="w-full h-full object-cover" />
+                        </div>
+                        @image2
+                      </button>
+                    )}
+                    {uploadedImage && (
+                      <button
+                        onClick={() => insertMention("@face")}
+                        className="flex items-center gap-1 px-2 py-0.5 rounded-full border border-violet-400 dark:border-violet-700 text-violet-700 dark:text-violet-300 text-[11px] hover:bg-violet-50 dark:hover:bg-violet-900/30 transition-colors"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3 h-3">
+                          <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+                        </svg>
+                        @face
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
+
 
               <Separator />
 

@@ -170,6 +170,10 @@ export interface GenerateParams {
   orientation: ImageOrientation;
   image?: File;
   image_2?: File;
+  /** Gallery image URL used as face reference (sent to backend to avoid CORS) */
+  ref_image_url?: string;
+  /** When true, backend injects Chinese face-lock instruction into prompt */
+  faceMode?: boolean;
 }
 
 /** A generation record stored in history */

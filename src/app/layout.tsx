@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Barlow_Condensed } from "next/font/google";
+import { Barlow_Condensed, Outfit } from "next/font/google"; // Added Outfit
 import "./globals.css";
 import "react-photo-view/dist/react-photo-view.css";
 import { cn } from "@/lib/utils";
@@ -13,10 +13,17 @@ const barlowCondensed = Barlow_Condensed({
   display: "swap",
 });
 
+const outfit = Outfit({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-outfit",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "MeiGen - Trending AI Prompts from X | Updated Weekly",
+  title: "LuminaGen - AI Image Generation & Face Preservation",
   description:
-    "Discover trending AI image prompts curated from X. Copy, remix, and generate stunning AI art with Nanobanana Pro, Midjourney, and more.",
+    "Create stunning AI images with face preservation. Drag, describe, enhance, and generate with Seedream 5.0, GPT Image, and more.",
 };
 
 export default function RootLayout({
@@ -25,7 +32,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("h-full antialiased", barlowCondensed.variable)} suppressHydrationWarning>
+    <html lang="en" className={cn("h-full antialiased", barlowCondensed.variable, outfit.variable)} suppressHydrationWarning>
       <body
         className="min-h-full flex flex-col"
         suppressHydrationWarning

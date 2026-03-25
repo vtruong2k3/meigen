@@ -13,7 +13,7 @@ interface HeaderTabsProps {
   onSearch?: () => void;
 }
 
-/* Small SVG brand icons matching meigen.ai's tab icons */
+/* Small SVG brand icons for model tabs */
 function ModelIcon({ modelId }: { modelId: string }) {
   if (modelId === "nanobanana") {
     return <GoogleGIcon size={14} />;
@@ -21,7 +21,7 @@ function ModelIcon({ modelId }: { modelId: string }) {
   if (modelId === "gptimage") {
     return (
       <svg width="14" height="14" viewBox="0 0 24 24" className="shrink-0" fill="currentColor">
-        <circle cx="12" cy="12" r="10" fill="#1b1b1b" />
+        <circle cx="12" cy="12" r="10" fill="currentColor" />
         <path d="M12 6.5a1 1 0 0 1 1 1v3.5H16.5a1 1 0 1 1 0 2H13v3.5a1 1 0 1 1-2 0V13H7.5a1 1 0 1 1 0-2H11V7.5a1 1 0 0 1 1-1z" fill="white"/>
       </svg>
     );
@@ -29,7 +29,7 @@ function ModelIcon({ modelId }: { modelId: string }) {
   if (modelId === "midjourney") {
     return (
       <svg width="14" height="14" viewBox="0 0 24 24" className="shrink-0" fill="currentColor">
-        <path d="M12 2L4 14h16L12 2zm0 3.5L16.5 13h-9L12 5.5zM4 16h16v2H4v-2z" fill="#1b1b1b"/>
+        <path d="M12 2L4 14h16L12 2zm0 3.5L16.5 13h-9L12 5.5zM4 16h16v2H4v-2z" fill="currentColor"/>
       </svg>
     );
   }
@@ -55,8 +55,8 @@ export function HeaderTabs({
               className={cn(
                 "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium whitespace-nowrap transition-all duration-200 outline-none",
                 activeModel === tab.id
-                  ? "bg-white dark:bg-neutral-800 border border-border/80 text-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-white/50 dark:hover:bg-neutral-800/50 border border-transparent"
+                  ? "bg-card dark:bg-secondary border border-border/80 text-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-card/50 dark:hover:bg-secondary/50 border border-transparent"
               )}
             >
               <ModelIcon modelId={tab.id} />

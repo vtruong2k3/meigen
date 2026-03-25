@@ -36,18 +36,20 @@ export function Sidebar({ activeCategory, currentView, onCategoryChange, onGetSt
     <aside className="hidden md:flex flex-col w-[260px] min-w-[260px] h-screen sticky top-0 bg-background overflow-hidden">
       {/* Logo */}
       <div className="px-5 pt-5 pb-4">
-        <div className="flex items-center gap-1.5">
-          <div className="w-7 h-7 bg-primary rounded-md flex items-center justify-center">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-primary-foreground">
-              <path d="M12 2L2 12l10 10 10-10L12 2z" fill="currentColor" />
+      <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-primary-foreground">
+              <path d="M12 1L13.8 8.2L12 6.5L10.2 8.2L12 1Z" fill="currentColor" opacity="0.5"/>
+              <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor"/>
+              <circle cx="12" cy="12" r="2.5" fill="currentColor" opacity="0.15"/>
             </svg>
           </div>
           <span
-            className="text-xl tracking-wide"
-            style={{ fontFamily: 'var(--font-barlow), "Barlow Condensed", sans-serif' }}
+            className="text-[22px] tracking-tight"
+            style={{ fontFamily: 'var(--font-outfit), sans-serif' }}
           >
-            <span className="font-bold">MeiGen</span>{" "}
-            <span className="font-normal italic text-muted-foreground">Gallery</span>
+            <span className="font-semibold">Lumina</span>
+            <span className="font-light text-muted-foreground">Gen</span>
           </span>
         </div>
       </div>
@@ -156,7 +158,7 @@ export function Sidebar({ activeCategory, currentView, onCategoryChange, onGetSt
         <div className="p-3 rounded-xl border border-border bg-background hover:bg-muted transition-colors cursor-pointer">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-semibold text-foreground">Share MeiGen</p>
+              <p className="text-sm font-semibold text-foreground">Share LuminaGen</p>
               <p className="text-xs text-muted-foreground">
                 Invite friends, get 200 credits
               </p>

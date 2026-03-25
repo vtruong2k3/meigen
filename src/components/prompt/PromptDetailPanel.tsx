@@ -139,7 +139,7 @@ export function PromptDetailPanel({
               <div className="w-[400px] h-[400px] max-w-[90vw] bg-neutral-100 dark:bg-neutral-800 rounded-3xl flex flex-col items-center justify-center p-6 text-center ring-1 ring-border shadow-xl">
                 <ImageIcon className="w-12 h-12 text-neutral-300 mb-3" />
                 <h4 className="text-neutral-500 font-semibold mb-1">Text Prompt Only</h4>
-                <p className="text-neutral-400 text-[12px]">No image visualization available</p>
+                <p className="text-muted-foreground text-[12px]">No image visualization available</p>
               </div>
             )}
 

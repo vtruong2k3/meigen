@@ -65,7 +65,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
         <div className="overflow-hidden rounded-2xl bg-background">
         {/* Gradient banner with title */}
         <motion.div
-          className="mx-4 mt-4 rounded-xl px-6 pt-6 pb-5 bg-[linear-gradient(135deg,#e8d5f5_0%,#f5e6d8_25%,#fce4ec_50%,#e8f0fe_75%,#d1c4e9_100%)] dark:bg-[linear-gradient(135deg,#1e1b4b_0%,#312e81_25%,#4c1d95_50%,#1e293b_75%,#1e1b4b_100%)]"
+          className="mx-4 mt-4 rounded-xl px-6 pt-6 pb-5 bg-[linear-gradient(135deg,#f3e8ff_0%,#e0e7ff_25%,#fae8ff_50%,#f0fdfa_75%,#f3e8ff_100%)] dark:bg-[linear-gradient(135deg,#050014_0%,#13002b_25%,#2e1065_50%,#170f38_75%,#050014_100%)]"
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4 }}
@@ -75,7 +75,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
               className="text-[26px] font-semibold"
               style={{ fontFamily: 'var(--font-barlow), "Barlow Condensed", sans-serif' }}
             >
-              Welcome to MeiGen
+              Welcome to LuminaGen
             </DialogTitle>
             <DialogDescription className="text-[13px]">
               Sign in to access your account
