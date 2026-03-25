@@ -1,0 +1,118 @@
+{
+  "timestamp": "2026-03-25T08:41:37.219795",
+  "model": "sora_image",
+  "api": "https://api.chainhub.tech/v1/images/generations",
+  "rounds": 1,
+  "total": 6,
+  "passed": 6,
+  "failed": 0,
+  "results": [
+    {
+      "test_id": "r1_1",
+      "mode": "t2i",
+      "requested_size": "1024x1024",
+      "size_label": "Square",
+      "prompt": "A cute golden retriever puppy sitting in a garden, soft natu",
+      "http_status": 200,
+      "elapsed": 15.28,
+      "success": true,
+      "image_url": "https://midjourney-plus.oss-us-west-1.aliyuncs.com/sora/7bb90894-abcb-4657-9307-00f96442c29e.png",
+      "actual_dimensions": "1024x1024",
+      "actual_format": "PNG",
+      "file_size_kb": 1583.8
+    },
+    {
+      "test_id": "r1_2",
+      "mode": "t2i",
+      "requested_size": "1024x1536",
+      "size_label": "Portrait",
+      "prompt": "Cyberpunk cityscape at night with neon lights reflecting on ",
+      "http_status": 200,
+      "elapsed": 18.06,
+      "success": true,
+      "image_url": "https://midjourney-plus.oss-us-west-1.aliyuncs.com/sora/f9134f66-04fb-406f-925f-004e2cf9b5e6.png",
+      "actual_dimensions": "1024x1536",
+      "actual_format": "PNG",
+      "file_size_kb": 2812.0
+    },
+    {
+      "test_id": "r1_3",
+      "mode": "t2i",
+      "requested_size": "1536x1024",
+      "size_label": "Landscape",
+      "prompt": "A steaming cup of Vietnamese coffee on a wooden table, morni",
+      "http_status": 200,
+      "elapsed": 32.3,
+      "success": true,
+      "image_url": "https://midjourney-plus.oss-us-west-1.aliyuncs.com/sora/701e2cb8-2b04-4ee1-882c-1ff96b05390a.png",
+      "actual_dimensions": "1536x1024",
+      "actual_format": "PNG",
+      "file_size_kb": 2182.4
+    },
+    {
+      "test_id": "r1_4",
+      "mode": "i2i",
+      "requested_size": "1024x1024",
+      "size_label": "Square",
+      "prompt": "Add dramatic sunset lighting to the scene",
+      "input_image": "g.volces.com/doc_image/seededit_i2i.jpeg",
+      "http_status": 200,
+      "elapsed": 45.85,
+      "success": true,
+      "image_url": "https://midjourney-plus.oss-us-west-1.aliyuncs.com/sora/07938282-0f31-479f-82b0-db3c7618d2c2.png",
+      "actual_dimensions": "1024x1024",
+      "actual_format": "PNG",
+      "file_size_kb": 1461.8
+    },
+    {
+      "test_id": "r1_5",
+      "mode": "i2i",
+      "requested_size": "1024x1536",
+      "size_label": "Portrait",
+      "prompt": "Transform into watercolor painting style",
+      "input_image": "m/doc_image/seedream4_5_imageToimage.png",
+      "http_status": 200,
+      "elapsed": 53.97,
+      "success": true,
+      "image_url": "https://midjourney-plus.oss-us-west-1.aliyuncs.com/sora/fd4a442e-5415-4834-8c21-34945fbed0c9.png",
+      "actual_dimensions": "1024x1536",
+      "actual_format": "PNG",
+      "file_size_kb": 2722.5
+    },
+    {
+      "test_id": "r1_6",
+      "mode": "i2i",
+      "requested_size": "1536x1024",
+      "size_label": "Landscape",
+      "prompt": "Add dramatic sunset lighting to the scene",
+      "input_image": "g.volces.com/doc_image/seededit_i2i.jpeg",
+      "http_status": 200,
+      "elapsed": 45.41,
+      "success": true,
+      "image_url": "https://midjourney-plus.oss-us-west-1.aliyuncs.com/sora/72aa3fdc-5630-456b-a242-9c5283e6d9aa.png",
+      "actual_dimensions": "1536x1024",
+      "actual_format": "PNG",
+      "file_size_kb": 2103.8
+    }
+  ],
+  "dimension_analysis": {
+    "1024x1024": {
+      "success_rate": "2/2",
+      "actual_sizes": [
+        "1024x1024"
+      ]
+    },
+    "1024x1536": {
+      "success_rate": "2/2",
+      "actual_sizes": [
+        "1024x1536"
+      ]
+    },
+    "1536x1024": {
+      "success_rate": "2/2",
+      "actual_sizes": [
+        "1536x1024"
+      ]
+    }
+  }
+}

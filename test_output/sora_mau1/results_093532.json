@@ -1,0 +1,40 @@
+[
+  {
+    "test": "T2I 1024x1024",
+    "status": "PASS",
+    "time": 18.95
+  },
+  {
+    "test": "T2I 1024x1536",
+    "status": "PASS",
+    "time": 15.81
+  },
+  {
+    "test": "T2I 1536x1024",
+    "status": "PASS",
+    "time": 19.1
+  },
+  {
+    "test": "I2I 1024x1024",
+    "status": "FAIL",
+    "time": 39.7,
+    "error": "Internal Server Error - Server-side error"
+  },
+  {
+    "test": "I2I 1024x1536",
+    "status": "FAIL",
+    "time": 50.38,
+    "error": "Internal Server Error - Server-side error"
+  },
+  {
+    "test": "I2I 1536x1024",
+    "status": "FAIL",
+    "time": 46.34,
+    "error": "Internal Server Error - Server-side error"
+  },
+  {
+    "test": "I2I URL",
+    "status": "PASS",
+    "time": 43.07
+  }
+]
