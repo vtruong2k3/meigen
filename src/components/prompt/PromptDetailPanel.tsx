@@ -69,7 +69,7 @@ export function PromptDetailPanel({
       <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2 md:left-auto md:translate-x-0 md:right-[440px]">
         {/* Image counter */}
         {totalImages > 1 && (
-          <span className="px-3 py-1.5 bg-white/80 dark:bg-neutral-800/80 backdrop-blur-md rounded-full border border-black/10 dark:border-white/10 shadow-sm text-xs font-medium">
+          <span className="px-3 py-1.5 bg-card/80 dark:bg-card/80 backdrop-blur-md rounded-full border border-border/40 shadow-sm text-xs font-medium">
             {activeImageIndex + 1} / {totalImages}
           </span>
         )}
@@ -79,21 +79,21 @@ export function PromptDetailPanel({
             "flex items-center gap-1.5 px-3.5 py-1.5 backdrop-blur-md rounded-full border shadow-sm text-xs font-medium transition-colors",
             isFavorite
               ? "bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400"
-              : "bg-white/80 dark:bg-neutral-800/80 border-black/10 dark:border-white/10 hover:bg-white dark:hover:bg-neutral-700"
+              : "bg-card/80 dark:bg-card/80 border-border/40 hover:bg-card dark:hover:bg-muted-active"
           )}
         >
           <Heart className={cn("w-3.5 h-3.5", isFavorite && "fill-current")} />
           {isFavorite ? "Favorited" : "Add Favorite"}
         </button>
-        <button className="flex items-center justify-center w-8 h-8 bg-white/80 dark:bg-neutral-800/80 backdrop-blur-md rounded-full border border-black/10 dark:border-white/10 shadow-sm hover:bg-white dark:hover:bg-neutral-700 transition-colors">
+        <button className="flex items-center justify-center w-8 h-8 bg-card/80 dark:bg-card/80 backdrop-blur-md rounded-full border border-border/40 shadow-sm hover:bg-card dark:hover:bg-muted-active transition-colors">
           <Download className="w-3.5 h-3.5" />
         </button>
         <button
           onClick={onClose}
-          className="flex items-center bg-white/80 dark:bg-neutral-800/80 backdrop-blur-md rounded-full border border-black/10 dark:border-white/10 shadow-sm hover:bg-white dark:hover:bg-neutral-700 transition-colors overflow-hidden"
+          className="flex items-center bg-card/80 dark:bg-card/80 backdrop-blur-md rounded-full border border-border/40 shadow-sm hover:bg-card dark:hover:bg-muted-active transition-colors overflow-hidden"
         >
           <span className="px-3 py-1.5 text-[11px] font-medium">esc</span>
-          <span className="w-[0.5px] h-5 bg-black/10 dark:bg-white/10" />
+          <span className="w-[0.5px] h-5 bg-border/40" />
           <span className="px-2.5 py-1.5 flex items-center justify-center">
             <X className="w-3.5 h-3.5" />
           </span>
@@ -111,7 +111,7 @@ export function PromptDetailPanel({
             {/* Left arrow */}
             {totalImages > 1 && (
               <button
-                className="flex items-center justify-center w-10 h-10 mr-60 rounded-full bg-white/80 dark:bg-neutral-800/80 backdrop-blur-md border border-black/10 dark:border-white/10 shadow-md hover:bg-white dark:hover:bg-neutral-700 transition-colors shrink-0 disabled:opacity-30"
+                className="flex items-center justify-center w-10 h-10 mr-60 rounded-full bg-card/80 dark:bg-card/80 backdrop-blur-md border border-border/40 shadow-md hover:bg-card dark:hover:bg-muted-active transition-colors shrink-0 disabled:opacity-30"
                 onClick={() => setActiveImageIndex((prev) => Math.max(0, prev - 1))}
                 disabled={activeImageIndex === 0}
               >
@@ -136,9 +136,9 @@ export function PromptDetailPanel({
                 </PhotoView>
               </PhotoProvider>
             ) : (
-              <div className="w-[400px] h-[400px] max-w-[90vw] bg-neutral-100 dark:bg-neutral-800 rounded-3xl flex flex-col items-center justify-center p-6 text-center ring-1 ring-border shadow-xl">
-                <ImageIcon className="w-12 h-12 text-neutral-300 mb-3" />
-                <h4 className="text-neutral-500 font-semibold mb-1">Text Prompt Only</h4>
+              <div className="w-[400px] h-[400px] max-w-[90vw] bg-muted dark:bg-secondary rounded-3xl flex flex-col items-center justify-center p-6 text-center ring-1 ring-border shadow-xl">
+                <ImageIcon className="w-12 h-12 text-muted-foreground/40 mb-3" />
+                <h4 className="text-muted-foreground font-semibold mb-1">Text Prompt Only</h4>
                 <p className="text-muted-foreground text-[12px]">No image visualization available</p>
               </div>
             )}
@@ -172,7 +172,7 @@ export function PromptDetailPanel({
             {/* Right arrow */}
             {totalImages > 1 && (
               <button
-                className="flex items-center justify-center w-10 h-10 ml-60 rounded-full bg-white/80 dark:bg-neutral-800/80 backdrop-blur-md border border-black/10 dark:border-white/10 shadow-md hover:bg-white dark:hover:bg-neutral-700 transition-colors shrink-0 disabled:opacity-30"
+                className="flex items-center justify-center w-10 h-10 ml-60 rounded-full bg-card/80 dark:bg-card/80 backdrop-blur-md border border-border/40 shadow-md hover:bg-card dark:hover:bg-muted-active transition-colors shrink-0 disabled:opacity-30"
                 onClick={() => setActiveImageIndex((prev) => Math.min(totalImages - 1, prev + 1))}
                 disabled={activeImageIndex === totalImages - 1}
               >
@@ -248,14 +248,14 @@ export function PromptDetailPanel({
           <div className="flex items-center gap-3 p-4">
             <button
               onClick={() => { if (prompt && onUseAsPrompt) onUseAsPrompt(prompt); }}
-              className="flex-1 flex items-center justify-center gap-2 h-11 rounded-xl bg-foreground text-background text-sm font-semibold hover:bg-foreground/90 transition-colors"
+              className="flex-1 flex items-center justify-center gap-2 h-11 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
             >
               <RefreshCw className="w-4 h-4" />
               Use as Prompt
             </button>
             <button
               onClick={() => { if (prompt && onUseAsRef) onUseAsRef(prompt); }}
-              className="flex-1 flex items-center justify-center gap-2 h-11 rounded-xl bg-foreground text-background text-sm font-semibold hover:bg-foreground/90 transition-colors"
+              className="flex-1 flex items-center justify-center gap-2 h-11 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
             >
               <ImageIcon className="w-4 h-4" />
               Use as Ref

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import type { TrendingPrompt } from "@/types";
 import { ImageCard } from "./ImageCard";
 import Masonry from "react-masonry-css";
@@ -11,6 +12,12 @@ interface MasonryGalleryProps {
 }
 
 export function MasonryGallery({ images, onImageClick, columns: columnsProp }: MasonryGalleryProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const breakpointColumns = columnsProp
     ? columnsProp
     : {
@@ -20,22 +27,25 @@ export function MasonryGallery({ images, onImageClick, columns: columnsProp }: M
         640: 2,
       };
 
+  if (!mounted) {
+    // SSR placeholder — avoids hydration mismatch from browser extensions
+    return <div className="min-h-[50vh]" />;
+  }
+
   return (
-    <div suppressHydrationWarning>
-      <Masonry
-        breakpointCols={breakpointColumns}
-        className="masonry-grid"
-        columnClassName="masonry-grid-column"
-      >
-        {images.map((prompt, index) => (
-          <ImageCard
-            key={prompt.id}
-            prompt={prompt}
-            onClick={() => onImageClick(prompt)}
-            priority={index < 8}
-          />
-        ))}
-      </Masonry>
-    </div>
+    <Masonry
+      breakpointCols={breakpointColumns}
+      className="masonry-grid"
+      columnClassName="masonry-grid-column"
+    >
+      {images.map((prompt, index) => (
+        <ImageCard
+          key={prompt.id}
+          prompt={prompt}
+          onClick={() => onImageClick(prompt)}
+          priority={index < 8}
+        />
+      ))}
+    </Masonry>
   );
 }

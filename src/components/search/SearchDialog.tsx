@@ -77,7 +77,7 @@ export function SearchDialog({ open, onOpenChange, onSelectPrompt }: SearchDialo
               className={cn(
                 "px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200",
                 activeTab === tab
-                  ? "bg-foreground text-background"
+                  ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted"
               )}
             >

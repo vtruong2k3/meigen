@@ -189,4 +189,5 @@ export interface GenerationHistoryItem {
   width: number;
   height: number;
   quality: ImageQuality;
+  error?: string | null;
 }

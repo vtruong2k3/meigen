@@ -196,7 +196,7 @@ export default function Home() {
 
       {/* Home View — Main Content */}
       {currentView === "home" && (
-      <main className="flex-1 flex flex-col mt-4 ml-4 mr-4 bg-white dark:bg-neutral-900 rounded-t-2xl shadow-sm overflow-hidden min-h-0">
+      <main className="flex-1 flex flex-col mt-4 ml-4 mr-4 bg-card rounded-t-2xl shadow-sm overflow-hidden min-h-0">
         {/* Header Tabs */}
         <HeaderTabs
           activeModel={activeModel}

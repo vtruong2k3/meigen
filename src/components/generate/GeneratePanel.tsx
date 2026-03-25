@@ -321,20 +321,20 @@ export function GeneratePanel({ open, mode, prompt, onClose, onGenerationStart, 
                 className={cn(
                   "flex items-center gap-3 p-3 rounded-xl border border-dashed transition-colors",
                   isDescribing
-                    ? "border-amber-400 bg-amber-50/50 dark:bg-amber-950/20"
+                    ? "border-cyan-400 bg-cyan-50/50 dark:bg-cyan-950/20"
                     : describePreview
-                      ? "border-green-400 bg-green-50/50 dark:bg-green-950/20"
+                      ? "border-cyan-400 bg-cyan-50/50 dark:bg-cyan-950/20"
                       : "border-border hover:border-foreground/30 cursor-grab"
                 )}
               >
                 <div className={cn(
                   "w-9 h-9 rounded-lg flex items-center justify-center shrink-0",
-                  describePreview ? "bg-green-100 dark:bg-green-900/40" : "bg-muted"
+                  describePreview ? "bg-cyan-100 dark:bg-cyan-900/40" : "bg-muted"
                 )}>
                   {isDescribing ? (
-                    <Loader2 className="w-4 h-4 animate-spin text-amber-500" />
+                    <Loader2 className="w-4 h-4 animate-spin text-cyan-400" />
                   ) : describePreview ? (
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                    <CheckCircle2 className="w-4 h-4 text-cyan-400" />
                   ) : (
                     <Sparkles className="w-4 h-4 text-muted-foreground" />
                   )}
@@ -368,15 +368,15 @@ export function GeneratePanel({ open, mode, prompt, onClose, onGenerationStart, 
                 className={cn(
                   "flex items-center gap-3 p-3 rounded-xl border border-dashed transition-colors cursor-pointer group",
                   imagePreview2
-                    ? "border-violet-400 bg-violet-50/50 dark:bg-violet-950/20"
+                    ? "border-fuchsia-400 bg-fuchsia-50/50 dark:bg-fuchsia-950/20"
                     : "border-border hover:border-foreground/30"
                 )}
               >
                 <div className={cn(
                   "w-9 h-9 rounded-lg flex items-center justify-center shrink-0",
-                  imagePreview2 ? "bg-violet-100 dark:bg-violet-900/40" : "bg-muted group-hover:bg-muted/80"
+                  imagePreview2 ? "bg-fuchsia-100 dark:bg-fuchsia-900/40" : "bg-muted group-hover:bg-muted/80"
                 )}>
-                  <ImageIcon className={cn("w-4 h-4", imagePreview2 ? "text-violet-500" : "text-muted-foreground")} />
+                  <ImageIcon className={cn("w-4 h-4", imagePreview2 ? "text-fuchsia-500" : "text-muted-foreground")} />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-[13px] font-medium">
@@ -465,9 +465,9 @@ export function GeneratePanel({ open, mode, prompt, onClose, onGenerationStart, 
                   )}
                   {/* Enhancing overlay */}
                   {isEnhancing && (
-                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 rounded-xl bg-background/80 backdrop-blur-sm border border-violet-500/30 dark:border-violet-500/30">
-                      <Loader2 className="w-5 h-5 animate-spin text-violet-500" />
-                      <p className="text-[12px] text-violet-600 dark:text-violet-400">Enhancing prompt...</p>
+                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 rounded-xl bg-background/80 backdrop-blur-sm border border-cyan-500/30 dark:border-cyan-500/30">
+                      <Loader2 className="w-5 h-5 animate-spin text-cyan-400" />
+                      <p className="text-[12px] text-cyan-600 dark:text-cyan-400">Enhancing prompt...</p>
                     </div>
                   )}
                   <Textarea
@@ -523,7 +523,7 @@ export function GeneratePanel({ open, mode, prompt, onClose, onGenerationStart, 
                     {uploadedImage && (
                       <button
                         onClick={() => insertMention("@face")}
-                        className="flex items-center gap-1 px-2 py-0.5 rounded-full border border-violet-400 dark:border-violet-700 text-violet-700 dark:text-violet-300 text-[11px] hover:bg-violet-50 dark:hover:bg-violet-900/30 transition-colors"
+                        className="flex items-center gap-1 px-2 py-0.5 rounded-full border border-fuchsia-400 dark:border-fuchsia-700 text-fuchsia-700 dark:text-fuchsia-300 text-[11px] hover:bg-fuchsia-50 dark:hover:bg-fuchsia-900/30 transition-colors"
                       >
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3 h-3">
                           <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
@@ -697,7 +697,7 @@ export function GeneratePanel({ open, mode, prompt, onClose, onGenerationStart, 
                 className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl border border-border hover:bg-muted/50 transition-colors"
               >
                 <span className={cn("w-2 h-2 rounded-full shrink-0", selectedModel.color)} />
-                <Sparkles className={cn("w-3.5 h-3.5", selectedModel.icon === "seededit" ? "text-pink-500" : "text-emerald-500")} />
+                <Sparkles className={cn("w-3.5 h-3.5", selectedModel.icon === "seededit" ? "text-pink-500" : "text-cyan-400")} />
                 <span className="text-[13px] font-medium flex-1 text-left">{selectedModel.label}</span>
                 <ChevronDown className={cn("w-3.5 h-3.5 text-muted-foreground transition-transform", showModelMenu && "rotate-180")} />
               </button>
@@ -741,7 +741,7 @@ export function GeneratePanel({ open, mode, prompt, onClose, onGenerationStart, 
                 "w-full h-12 rounded-xl text-sm font-semibold gap-2 transition-all",
                 isGenerating
                   ? "bg-muted text-muted-foreground"
-                  : "bg-foreground text-background hover:bg-foreground/90"
+                  : "bg-primary text-primary-foreground hover:bg-primary/90"
               )}
             >
               {isGenerating ? (

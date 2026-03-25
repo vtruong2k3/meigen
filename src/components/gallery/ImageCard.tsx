@@ -56,7 +56,7 @@ export function ImageCard({ prompt, onClick, priority = false }: ImageCardProps)
       style={{ height: !inView && lockedHeight ? `${lockedHeight}px` : "auto" }}
       className={cn(
         "group relative rounded-xl overflow-hidden cursor-pointer mb-3 transition-all duration-300",
-        !inView && "bg-neutral-100 dark:bg-neutral-800" // Subtle placeholder background
+        !inView && "bg-muted" // Subtle placeholder background
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -104,14 +104,14 @@ export function ImageCard({ prompt, onClick, priority = false }: ImageCardProps)
             onError={() => setImgError(true)}
           />
         ) : (
-          <div className="w-full bg-linear-to-br from-neutral-100 to-neutral-200 dark:from-neutral-800 dark:to-neutral-700 rounded-xl" style={{ aspectRatio: "3/4" }}>
+          <div className="w-full bg-linear-to-br from-muted to-muted/80 rounded-xl" style={{ aspectRatio: "3/4" }}>
             <div className="w-full h-full flex flex-col items-center justify-center gap-2 p-4">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-neutral-400">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-muted-foreground">
                 <rect x="3" y="3" width="18" height="18" rx="2" />
                 <circle cx="8.5" cy="8.5" r="1.5" />
                 <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
               </svg>
-              <span className="text-neutral-400 text-center text-[11px]">Image unavailable</span>
+              <span className="text-muted-foreground text-center text-[11px]">Image unavailable</span>
             </div>
           </div>
         )}

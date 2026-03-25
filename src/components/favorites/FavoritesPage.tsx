@@ -28,7 +28,7 @@ export function FavoritesPage({
   return (
     <>
       {/* Main container */}
-      <div className="flex-1 m-4 bg-white dark:bg-neutral-900 rounded-2xl shadow-sm overflow-hidden flex flex-col min-h-[calc(100vh-2rem)]">
+      <div className="flex-1 m-4 bg-card rounded-2xl shadow-sm overflow-hidden flex flex-col min-h-[calc(100vh-2rem)]">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border/50">
           <div className="flex items-center gap-3">

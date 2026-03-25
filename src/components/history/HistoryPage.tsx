@@ -90,7 +90,7 @@ export function HistoryPage({
 
   return (
     <>
-      <div className="flex-1 m-4 bg-white dark:bg-neutral-900 rounded-2xl shadow-sm overflow-hidden flex flex-col h-[calc(100vh-2rem)]">
+      <div className="flex-1 m-4 bg-card rounded-2xl shadow-sm overflow-hidden flex flex-col h-[calc(100vh-2rem)]">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border/50">
           <div className="flex items-center gap-3">
@@ -150,7 +150,7 @@ export function HistoryPage({
             className={cn(
               "px-4 py-1.5 rounded-lg text-sm font-medium transition-colors",
               tab === "generations"
-                ? "bg-foreground text-background"
+                ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:text-foreground hover:bg-muted"
             )}
           >
@@ -164,7 +164,7 @@ export function HistoryPage({
             className={cn(
               "px-4 py-1.5 rounded-lg text-sm font-medium transition-colors",
               tab === "viewed"
-                ? "bg-foreground text-background"
+                ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:text-foreground hover:bg-muted"
             )}
           >
@@ -200,9 +200,39 @@ export function HistoryPage({
                           className="object-cover"
                         />
                       ) : gen.status === "FAILED" ? (
-                        <div className="w-full h-full bg-red-50 dark:bg-red-950/20 flex flex-col items-center justify-center gap-2">
-                          <span className="text-red-500 text-sm font-medium">Failed</span>
-                          <span className="text-[10px] text-muted-foreground">Tap to retry</span>
+                        <div className="w-full h-full bg-card flex flex-col items-center justify-center gap-3 p-4">
+                          {/* Broken image illustration */}
+                          <svg width="56" height="56" viewBox="0 0 64 64" fill="none" className="text-muted-foreground/25">
+                            {/* Image frame */}
+                            <rect x="8" y="12" width="48" height="40" rx="4" stroke="currentColor" strokeWidth="2" />
+                            {/* Crack lines */}
+                            <path d="M32 12L28 28L36 32L30 52" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            {/* Mountain/landscape inside */}
+                            <path d="M8 44l12-10 8 6 10-14 18 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.4" />
+                            {/* Sun */}
+                            <circle cx="46" cy="22" r="4" stroke="currentColor" strokeWidth="1.5" opacity="0.4" />
+                            {/* Warning badge */}
+                            <circle cx="52" cy="12" r="9" fill="var(--destructive, #ff00e5)" opacity="0.15" />
+                            <path d="M52 7v6M52 15.5v.5" stroke="var(--destructive, #ff00e5)" strokeWidth="2" strokeLinecap="round" />
+                          </svg>
+                          {/* Error message */}
+                          <div className="text-center space-y-1 px-2">
+                            <p className="text-xs font-medium text-foreground leading-tight">
+                              {gen.error || "High demand right now, credits refunded"}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground">Credits refunded</p>
+                          </div>
+                          {/* Retry button */}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onSelectGeneration?.(gen); }}
+                            className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-primary text-primary-foreground text-[11px] font-semibold hover:bg-primary/90 transition-colors"
+                          >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3 h-3">
+                              <path d="M1 4v6h6M23 20v-6h-6" strokeLinecap="round" strokeLinejoin="round" />
+                              <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                            Retry
+                          </button>
                         </div>
                       ) : (
                         /* Processing — circular progress */

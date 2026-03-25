@@ -52,75 +52,75 @@
 
 :root {
   --radius: 0.625rem;
-  /* ── Future AI — Light Mode (Silver/Clean) ── */
-  --background: #f8fafc;
-  --foreground: #020617;
+  /* ── Cyberpunk — Light Mode ── */
+  --background: #f0f4ff;
+  --foreground: #050816;
   --card: #ffffff;
-  --card-foreground: #020617;
+  --card-foreground: #050816;
   --popover: #ffffff;
-  --popover-foreground: #020617;
-  --primary: #8b5cf6; /* Cyber Purple */
+  --popover-foreground: #050816;
+  --primary: #0891b2; /* Cyan 600 for light */
   --primary-foreground: #ffffff;
-  --secondary: #e2e8f0;
-  --secondary-foreground: #1e293b;
-  --muted: #f1f5f9;
+  --secondary: #e0f7fa;
+  --secondary-foreground: #0e4d65;
+  --muted: #eef2ff;
   --muted-foreground: #64748b;
-  --muted-active: #cbd5e1;
-  --accent: #f3e8ff;
-  --accent-foreground: #6d28d9;
-  --destructive: #ef4444;
-  --border: #cbd5e1;
-  --input: #cbd5e1;
-  --ring: #8b5cf6;
-  --chart-1: #8b5cf6;
-  --chart-2: #ec4899;
-  --chart-3: #06b6d4;
-  --chart-4: #f59e0b;
-  --chart-5: #ef4444;
+  --muted-active: #67e8f9;
+  --accent: #fef3c7; /* Yellow tint */
+  --accent-foreground: #92400e;
+  --destructive: #ff00e5;
+  --border: #a5f3fc;
+  --input: #a5f3fc;
+  --ring: #0891b2;
+  --chart-1: #00f5ff;
+  --chart-2: #ff00e5;
+  --chart-3: #facc15;
+  --chart-4: #10b981;
+  --chart-5: #f43f5e;
   --sidebar: #ffffff;
-  --sidebar-foreground: #020617;
-  --sidebar-primary: #8b5cf6;
+  --sidebar-foreground: #050816;
+  --sidebar-primary: #0891b2;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f3e8ff;
-  --sidebar-accent-foreground: #6d28d9;
-  --sidebar-border: #cbd5e1;
-  --sidebar-ring: #8b5cf6;
+  --sidebar-accent: #e0f7fa;
+  --sidebar-accent-foreground: #0e4d65;
+  --sidebar-border: #a5f3fc;
+  --sidebar-ring: #0891b2;
 }
 
 .dark {
-  /* ── Future AI — Dark Mode (Deep Space & Neon) ── */
-  --background: #030305; /* OLED-like deep space black */
-  --foreground: #ffffff;
-  --card: #0a0b10; /* Slightly elevated dark */
-  --card-foreground: #ffffff;
-  --popover: #0a0b10;
-  --popover-foreground: #ffffff;
-  --primary: #a855f7; /* Neon Violet */
-  --primary-foreground: #ffffff;
-  --secondary: #13141f; /* Elevated cyber gray */
-  --secondary-foreground: #ffffff;
-  --muted: #13141f;
-  --muted-foreground: #8b92a5;
-  --muted-active: #1d1e2e;
-  --accent: #2c1a4d; /* Deep purple highlight */
-  --accent-foreground: #d8b4fe;
-  --destructive: #ef4444;
-  --border: #1c1d29; /* Very subtle glow border */
-  --input: #1c1d29;
-  --ring: #a855f7;
-  --chart-1: #a855f7; /* Violet */
-  --chart-2: #06b6d4; /* Cyan */
-  --chart-3: #ec4899; /* Pink */
-  --chart-4: #facc15; /* Yellow */
-  --chart-5: #ef4444;
-  --sidebar: #050508;
-  --sidebar-foreground: #ffffff;
-  --sidebar-primary: #a855f7;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #1e1136;
-  --sidebar-accent-foreground: #d8b4fe;
-  --sidebar-border: #13141f;
-  --sidebar-ring: #a855f7;
+  /* ── Cyberpunk — Dark Mode (Neon Hacker) ── */
+  --background: #050816; /* Deep void */
+  --foreground: #e2e8f0;
+  --card: #0a0e1f; /* Elevated dark */
+  --card-foreground: #e2e8f0;
+  --popover: #0a0e1f;
+  --popover-foreground: #e2e8f0;
+  --primary: #00f5ff; /* Cyan Neon */
+  --primary-foreground: #050816;
+  --secondary: #0f1630; /* Deep blue-dark */
+  --secondary-foreground: #e2e8f0;
+  --muted: #0c1228;
+  --muted-foreground: #94a3b8;
+  --muted-active: #1a2550;
+  --accent: #1a0a30; /* Deep purple-dark */
+  --accent-foreground: #ff00e5; /* Pink Neon */
+  --destructive: #ff00e5;
+  --border: #141e3a; /* Subtle navy border */
+  --input: #141e3a;
+  --ring: #00f5ff;
+  --chart-1: #00f5ff; /* Cyan */
+  --chart-2: #ff00e5; /* Pink */
+  --chart-3: #facc15; /* Yellow */
+  --chart-4: #10b981; /* Emerald */
+  --chart-5: #f43f5e; /* Rose */
+  --sidebar: #030610;
+  --sidebar-foreground: #e2e8f0;
+  --sidebar-primary: #00f5ff;
+  --sidebar-primary-foreground: #050816;
+  --sidebar-accent: #0f1630;
+  --sidebar-accent-foreground: #00f5ff;
+  --sidebar-border: #0c1228;
+  --sidebar-ring: #00f5ff;
 }
 
 @layer base {
@@ -146,16 +146,16 @@
   display: none;
 }
 
-/* Animated gradient background — Futuristic Light */
+/* Animated gradient background — Cyberpunk Light */
 .animated-gradient {
   background: linear-gradient(
     135deg,
-    #faf5ff 0%,
-    #f3e8ff 20%,
-    #e0e7ff 40%,
-    #f8fafc 60%,
-    #fdf2f8 80%,
-    #faf5ff 100%
+    #f0f4ff 0%,
+    #e0f7fa 20%,
+    #fce7f3 40%,
+    #fef3c7 60%,
+    #e0f7fa 80%,
+    #f0f4ff 100%
   );
   background-size: 400% 400%;
   animation: gradientShift 20s ease infinite;
@@ -169,16 +169,16 @@
   100% { background-position: 0% 50%; }
 }
 
-/* Dark mode animated gradient — Holographic Cyber */
+/* Dark mode animated gradient — Cyberpunk Neon */
 .dark .animated-gradient {
   background: linear-gradient(
     135deg,
-    #050014 0%,
-    #0a0118 20%,
-    #13002b 40%,
-    #0c0520 60%,
-    #1a0b2e 80%,
-    #050014 100%
+    #050816 0%,
+    #0a0520 20%,
+    #050d22 40%,
+    #0d0518 60%,
+    #08102a 80%,
+    #050816 100%
   );
   background-size: 400% 400%;
   animation: gradientShift 20s ease infinite;

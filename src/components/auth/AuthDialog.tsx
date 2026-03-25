@@ -65,7 +65,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
         <div className="overflow-hidden rounded-2xl bg-background">
         {/* Gradient banner with title */}
         <motion.div
-          className="mx-4 mt-4 rounded-xl px-6 pt-6 pb-5 bg-[linear-gradient(135deg,#f3e8ff_0%,#e0e7ff_25%,#fae8ff_50%,#f0fdfa_75%,#f3e8ff_100%)] dark:bg-[linear-gradient(135deg,#050014_0%,#13002b_25%,#2e1065_50%,#170f38_75%,#050014_100%)]"
+          className="mx-4 mt-4 rounded-xl px-6 pt-6 pb-5 bg-[linear-gradient(135deg,#e0f7fa_0%,#fce7f3_25%,#fef3c7_50%,#e0f7fa_75%,#f0f4ff_100%)] dark:bg-[linear-gradient(135deg,#050816_0%,#0a0520_25%,#050d22_50%,#0d0518_75%,#050816_100%)]"
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4 }}
@@ -175,7 +175,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full h-[52px] rounded-full bg-foreground text-background text-sm font-semibold hover:bg-foreground/90"
+                className="w-full h-[52px] rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90"
               >
                 {isSubmitting ? "Sending..." : "Continue with Email"}
               </Button>

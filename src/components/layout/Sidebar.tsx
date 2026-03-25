@@ -15,7 +15,7 @@ import {
   Sun,
   Moon,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface SidebarProps {
   activeCategory: string;
@@ -31,6 +31,11 @@ interface SidebarProps {
 export function Sidebar({ activeCategory, currentView, onCategoryChange, onGetStarted, onSearch, onHome, onHistory, onFavorites }: SidebarProps) {
   const [tagsOpen, setTagsOpen] = useState(true);
   const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <aside className="hidden md:flex flex-col w-[260px] min-w-[260px] h-screen sticky top-0 bg-background overflow-hidden">
@@ -136,12 +141,12 @@ export function Sidebar({ activeCategory, currentView, onCategoryChange, onGetSt
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
           className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
         >
-          {theme === "dark" ? (
+          {mounted && theme === "dark" ? (
             <Sun className="w-[18px] h-[18px]" />
           ) : (
             <Moon className="w-[18px] h-[18px]" />
           )}
-          {theme === "dark" ? "Light Mode" : "Dark Mode"}
+          {mounted && theme === "dark" ? "Light Mode" : "Dark Mode"}
         </button>
 
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
