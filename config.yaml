@@ -1,6 +1,6 @@
 external_apis:
-  api_key: "sk-N8az8TzPNYmUPWmNFl4GVCT8arIvdXrDccVn1fVipB5lIn1a"  # Thay bằng API key thực tế
-  base_url: "https://api.chainhub.tech/v1"
+  api_key: # Thay bằng API key thực tế
+  base_url: 
 
 models:
   image:
