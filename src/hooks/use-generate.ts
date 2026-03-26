@@ -165,9 +165,14 @@ export function useGenerate(options?: UseGenerateOptions): UseGenerateReturn {
         let currentProgress = 0;
         if (data.progress !== undefined && data.progress !== null) {
           currentProgress = data.progress;
+        } else if (data.status === "PENDING" || data.status === "QUEUED") {
+          // Simulate slow progress while waiting in queue
+          pollCountRef.current += 1;
+          currentProgress = Math.min(30, Math.round((1 - Math.exp(-pollCountRef.current / 15)) * 40));
         } else if (data.status === "PROCESSING") {
           pollCountRef.current += 1;
-          currentProgress = Math.min(95, Math.round((1 - Math.exp(-pollCountRef.current / 8)) * 100));
+          // Continue from where QUEUED left off (~30%) up to 95%
+          currentProgress = Math.min(95, 30 + Math.round((1 - Math.exp(-pollCountRef.current / 8)) * 65));
         } else if (data.status === "COMPLETED") {
           currentProgress = 100;
         }
@@ -359,7 +364,7 @@ export function useGenerate(options?: UseGenerateOptions): UseGenerateReturn {
     error,
     totalTime,
     progress,
-    isGenerating: status === "QUEUED" || status === "PROCESSING",
+    isGenerating: status === "PENDING" || status === "QUEUED" || status === "PROCESSING",
     generate,
     reset,
   };

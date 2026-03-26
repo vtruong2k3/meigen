@@ -9,7 +9,11 @@ export function cn(...inputs: ClassValue[]) {
 
 /** Format prompt text — if it's JSON, extract the most readable form */
 export function formatPromptText(text: string): string {
+  if (!text) return "";
   const trimmed = text.trim();
+
+  // Try to clean non-standard whitespace (like \u00A0) which breaks JSON.parse
+  const cleanJson = (str: string) => str.replace(/\u00A0/g, " ");
 
   /** Try to repair truncated JSON by appending missing closing brackets */
   function tryRepairAndParse(str: string): unknown | null {
@@ -55,10 +59,14 @@ export function formatPromptText(text: string): string {
 
     if (typeof obj === "object" && obj !== null) {
       for (const [key, val] of Object.entries(obj)) {
+        // Skip purely technical IDs or internal flags
+        if (key === "id" || key === "version" || key === "type" && typeof val !== "string") continue;
+
         const label = formatKey(key);
         if (typeof val === "string" || typeof val === "number" || typeof val === "boolean") {
           lines.push(`${pad}${label}: ${val}`);
         } else if (Array.isArray(val)) {
+          if (val.length === 0) continue;
           lines.push(`${pad}${label}:`);
           for (const item of val) {
             if (typeof item === "string" || typeof item === "number") {
@@ -77,48 +85,95 @@ export function formatPromptText(text: string): string {
   }
 
   function parseJson(jsonStr: string): unknown | null {
-    try { return JSON.parse(jsonStr); } catch { /* */ }
-    const repaired = tryRepairAndParse(jsonStr);
-    if (repaired) return repaired;
-    try { return JSON.parse("[" + jsonStr); } catch { /* */ }
-    try { return JSON.parse("[" + jsonStr + "]"); } catch { /* */ }
-    return tryRepairAndParse("[" + jsonStr);
+    const cleaned = cleanJson(jsonStr);
+    try { return JSON.parse(cleaned); } catch { /* */ }
+    
+    // Check if it's a list of objects without []
+    if (cleaned.startsWith("{")) {
+      try { return JSON.parse("[" + cleaned + "]"); } catch { /* */ }
+      const repairedArray = tryRepairAndParse("[" + cleaned + "]");
+      if (repairedArray) return repairedArray;
+    }
+
+    return tryRepairAndParse(cleaned);
+  }
+
+  /** Known prompt keys — ordered by priority */
+  const promptKeys = [
+    "full_prompt_string", "full_prompt", "assembled_prompt", 
+    "prompt_text", "prompt_string", "prompt", "description", "text", "image_prompt"
+  ];
+
+  /** Recursively search for a usable prompt string inside an object */
+  function findPromptInObject(obj: Record<string, unknown>, depth = 0): string | null {
+    if (depth > 4) return null;
+    
+    // 1. Check direct prompt keys
+    for (const key of promptKeys) {
+      const val = obj[key];
+      if (typeof val === "string" && val.length > 10) return val;
+      if (typeof val === "object" && val !== null && !Array.isArray(val)) {
+        const nested = findPromptInObject(val as Record<string, unknown>, depth + 1);
+        if (nested) return nested;
+      }
+    }
+
+    // 2. If it's a single key wrapper, go deeper regardless of key name
+    const keys = Object.keys(obj);
+    if (keys.length === 1) {
+      const val = obj[keys[0]];
+      if (typeof val === "object" && val !== null && !Array.isArray(val)) {
+        return findPromptInObject(val as Record<string, unknown>, depth + 1);
+      }
+    }
+
+    return null;
+  }
+
+  /** Extract array of prompt items from an object that wraps an array */
+  function findPromptArray(obj: Record<string, unknown>): Array<Record<string, unknown>> | null {
+    for (const val of Object.values(obj)) {
+      if (Array.isArray(val) && val.length > 0 && typeof val[0] === "object" && val[0] !== null) {
+        const first = val[0] as Record<string, unknown>;
+        if (first.prompt_text || first.full_prompt_string || first.prompt || first.description || first.title) {
+          return val as Array<Record<string, unknown>>;
+        }
+      }
+    }
+    return null;
+  }
+
+  function formatPromptArray(arr: Array<Record<string, unknown>>): string | null {
+    const promptTexts = arr
+      .map((item) => {
+        const pt = item.full_prompt_string || item.prompt_text || item.prompt || item.description || item.text;
+        const title = item.title || item.name;
+        if (typeof pt === "string") return title ? `### ${title}\n${pt}` : pt;
+        // If item itself is a structured object, format it
+        return formatObject(item);
+      })
+      .filter(Boolean);
+    return promptTexts.length > 0 ? promptTexts.join("\n\n") : null;
   }
 
   function formatParsed(parsed: unknown): string {
-    const promptKeys = [
-      "full_prompt_string", "full_prompt", "prompt_string",
-      "prompt_text", "prompt", "assembled_prompt", "description", "text",
-    ];
-
-    function findPromptInObject(obj: Record<string, unknown>): string | null {
-      for (const key of promptKeys) {
-        if (typeof obj[key] === "string" && (obj[key] as string).length > 20) {
-          return obj[key] as string;
-        }
-      }
-      const keys = Object.keys(obj);
-      if (keys.length === 1 && typeof obj[keys[0]] === "object" && obj[keys[0]] !== null && !Array.isArray(obj[keys[0]])) {
-        return findPromptInObject(obj[keys[0]] as Record<string, unknown>);
-      }
-      return null;
-    }
-
     if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
-      const found = findPromptInObject(parsed as Record<string, unknown>);
+      const obj = parsed as Record<string, unknown>;
+      const found = findPromptInObject(obj);
       if (found) return found;
+
+      const promptArr = findPromptArray(obj);
+      if (promptArr) {
+        const result = formatPromptArray(promptArr);
+        if (result) return result;
+      }
     }
 
-    if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === "object") {
-      const promptTexts = parsed
-        .map((item: Record<string, unknown>) => {
-          const pt = item.prompt_text || item.full_prompt_string || item.prompt || item.description;
-          const title = item.title;
-          if (typeof pt === "string") return title ? `${title}: ${pt}` : pt;
-          return null;
-        })
-        .filter(Boolean);
-      if (promptTexts.length > 0) return promptTexts.join("\n\n");
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      if (typeof parsed[0] === "object") {
+        const result = formatPromptArray(parsed as Array<Record<string, unknown>>);
+        if (result) return result;
+      }
     }
 
     return formatObject(parsed);
@@ -130,7 +185,7 @@ export function formatPromptText(text: string): string {
     if (parsed) return formatParsed(parsed);
   }
 
-  // Case 2: text contains JSON embedded after some text (e.g. "Description... Prompt: { ... }")
+  // Case 2: text contains JSON embedded
   const jsonStart = trimmed.search(/\n\s*\{/);
   if (jsonStart !== -1) {
     const prefixText = trimmed.slice(0, jsonStart).trim();

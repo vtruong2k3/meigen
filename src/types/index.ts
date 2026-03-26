@@ -126,6 +126,7 @@ export const IMAGE_SIZE_PRESETS: ImageSizePreset[] = [
 
 /** Task status from ChainHub API */
 export type GenerateTaskStatus =
+  | "PENDING"
   | "QUEUED"
   | "PROCESSING"
   | "COMPLETED"

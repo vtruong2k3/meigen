@@ -37,6 +37,72 @@ Then output Part 2 (Technical Metadata):
 
 Output ONLY the prompt. No conversational filler.`;
 
+const MODELS = ["gpt-4o", "gemini-3.1-flash-lite-preview", "gemini-2.0-flash"] as const;
+const MAX_RETRIES = 2;
+const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
+
+async function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function callVisionAPI(
+  model: string,
+  imageUrl: string,
+): Promise<{ ok: true; description: string } | { ok: false; status: number; error: string }> {
+  const payload = {
+    model,
+    max_tokens: 600,
+    messages: [
+      { role: "system", content: VISION_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: [
+          { type: "image_url", image_url: { url: imageUrl } },
+          { type: "text", text: "Analyze this image and generate a detailed prompt that could recreate it using the Blueprint Method." },
+        ],
+      },
+    ],
+  };
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    if (attempt > 0) {
+      const delayMs = 1000 * Math.pow(2, attempt - 1); // 1s, 2s
+      console.log(`[API /describe] Retry ${attempt}/${MAX_RETRIES} for ${model} after ${delayMs}ms...`);
+      await sleep(delayMs);
+    }
+
+    console.log(`[API /describe] Calling ${model} vision (attempt ${attempt + 1}), imageUrl: ${imageUrl.slice(0, 60)}...`);
+
+    const res = await fetch(CHAINHUB_CHAT_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const description: string = data?.choices?.[0]?.message?.content?.trim() || "";
+      if (!description) {
+        return { ok: false, status: 500, error: "No description returned from vision model" };
+      }
+      return { ok: true, description };
+    }
+
+    const errText = await res.text();
+    console.error(`[API /describe] ${model} error (attempt ${attempt + 1}):`, res.status, errText);
+
+    // If not retryable, bail immediately
+    if (!RETRYABLE_STATUS.has(res.status)) {
+      return { ok: false, status: res.status, error: `Vision API error: ${res.status}` };
+    }
+  }
+
+  return { ok: false, status: 503, error: `${model} unavailable after ${MAX_RETRIES + 1} attempts` };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -50,47 +116,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "API not configured" }, { status: 500 });
     }
 
-    const payload = {
-      model: "gpt-4o",
-      max_tokens: 600,
-      messages: [
-        { role: "system", content: VISION_SYSTEM_PROMPT },
-        {
-          role: "user",
-          content: [
-            { type: "image_url", image_url: { url: imageUrl } },
-            { type: "text", text: "Analyze this image and generate a detailed prompt that could recreate it using the Blueprint Method." },
-          ],
-        },
-      ],
-    };
+    // Try each model in order, fallback on retryable errors
+    for (const model of MODELS) {
+      const result = await callVisionAPI(model, imageUrl);
 
-    console.log("[API /describe] Calling GPT-4o vision, imageUrl:", imageUrl.slice(0, 60) + "...");
+      if (result.ok) {
+        console.log(`[API /describe] Success (${model}):`, result.description.slice(0, 80) + "...");
+        return NextResponse.json({ description: result.description });
+      }
 
-    const res = await fetch(CHAINHUB_CHAT_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
+      // Non-retryable error → return immediately
+      if (!RETRYABLE_STATUS.has(result.status)) {
+        return NextResponse.json({ error: result.error }, { status: result.status });
+      }
 
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error("[API /describe] Vision API error:", res.status, errText);
-      return NextResponse.json({ error: `Vision API error: ${res.status}` }, { status: res.status });
+      console.warn(`[API /describe] ${model} failed, trying next model...`);
     }
 
-    const data = await res.json();
-    const description: string = data?.choices?.[0]?.message?.content?.trim() || "";
-
-    if (!description) {
-      return NextResponse.json({ error: "No description returned from GPT-4o" }, { status: 500 });
-    }
-
-    console.log("[API /describe] Success:", description.slice(0, 80) + "...");
-    return NextResponse.json({ description });
+    return NextResponse.json({ error: "All vision models unavailable" }, { status: 503 });
   } catch (error) {
     console.error("[API /describe] Error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

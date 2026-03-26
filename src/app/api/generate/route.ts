@@ -2,12 +2,12 @@ import { SEEDREAM_MODEL_NAMES, SEEDREAM_V3_MODEL_NAMES } from "@/lib/models";
 import { NextRequest, NextResponse } from "next/server";
 
 // Legacy ChainHub API (old polling-based endpoint)
-const CHAINHUB_API_URL = process.env.CHAINHUB_API!!;
-const CHAINHUB_API_KEY = process.env.CHAINHUB_API_KEY!!;
+const CHAINHUB_API_URL = process.env.CHAINHUB_API!;
+const CHAINHUB_API_KEY = process.env.CHAINHUB_API_KEY!;
 
 // New Seedream API (synchronous endpoint)
-const BASE_API_URL = process.env.BASE_API!!;
-const BASE_API_KEY = process.env.BASE_API_KEY!!;
+const BASE_API_URL = process.env.BASE_API!;
+const BASE_API_KEY = process.env.BASE_API_KEY!;
 
 /** Convert uploaded File to base64 data URI */
 async function fileToBase64(file: File): Promise<string> {

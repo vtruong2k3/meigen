@@ -77,17 +77,6 @@ export interface ModelConfig {
 /** All available models */
 export const MODELS: ModelConfig[] = [
   {
-    id: "chainhub",
-    label: "ChainHub",
-    apiName: "chainhub",
-    icon: "chainhub",
-    color: "bg-cyan-500",
-    description: "Your API key",
-    types: ["t2i", "i2i"],
-    supportedRatios: ALL_ASPECT_RATIOS,
-    apiType: "legacy",
-  },
-  {
     id: "seedream-5",
     label: "Seedream 5.0",
     apiName: "doubao-seedream-5-0-260128",
@@ -145,6 +134,17 @@ export const MODELS: ModelConfig[] = [
     types: ["t2i", "i2i"],
     supportedRatios: ["1:1", "2:3", "3:2"] as AspectRatio[],
     apiType: "seedream",
+  },
+  {
+    id: "chainhub",
+    label: "ChainHub",
+    apiName: "chainhub",
+    icon: "chainhub",
+    color: "bg-cyan-500",
+    description: "Your API key",
+    types: ["t2i", "i2i"],
+    supportedRatios: ALL_ASPECT_RATIOS,
+    apiType: "legacy",
   },
 ];
 

@@ -570,9 +570,18 @@ export function GeneratePanel({ open, mode, prompt, onClose, onGenerationStart, 
                     onClick={() => { setShowAspectMenu(!showAspectMenu); setShowResMenu(false); }}
                     className="flex items-center gap-1 px-2.5 h-7 rounded-lg border border-border text-xs font-medium hover:bg-muted transition-colors"
                   >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="3" y="3" width="18" height="18" rx="2" />
-                    </svg>
+                    {(() => {
+                      const [w, h] = aspectRatio.split(":").map(Number);
+                      const maxDim = 12;
+                      const scale = maxDim / Math.max(w, h);
+                      const rw = Math.round(w * scale);
+                      const rh = Math.round(h * scale);
+                      return (
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <rect x={(14 - rw) / 2} y={(14 - rh) / 2} width={rw} height={rh} rx="1.5" />
+                        </svg>
+                      );
+                    })()}
                     {aspectRatio}
                   </button>
                   <AnimatePresence>
@@ -583,21 +592,28 @@ export function GeneratePanel({ open, mode, prompt, onClose, onGenerationStart, 
                         exit={{ opacity: 0, y: -4 }}
                         className="absolute bottom-full left-0 mb-1 bg-background rounded-lg border border-border shadow-lg p-1 z-20 min-w-[100px]"
                       >
-                        {selectedModel.supportedRatios.map((r) => (
-                          <button
-                            key={r}
-                            onClick={() => { setAspectRatio(r); setShowAspectMenu(false); }}
-                            className={cn(
-                              "flex items-center gap-2 w-full px-3 py-1.5 text-xs rounded-md text-left hover:bg-muted transition-colors",
-                              aspectRatio === r && "bg-muted font-semibold"
-                            )}
-                          >
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-muted-foreground">
-                              <rect x="3" y="3" width="18" height="18" rx="2" />
-                            </svg>
-                            {r}
-                          </button>
-                        ))}
+                        {selectedModel.supportedRatios.map((r) => {
+                          const [w, h] = r.split(":").map(Number);
+                          const maxDim = 10;
+                          const scale = maxDim / Math.max(w, h);
+                          const rw = Math.max(3, Math.round(w * scale));
+                          const rh = Math.max(3, Math.round(h * scale));
+                          return (
+                            <button
+                              key={r}
+                              onClick={() => { setAspectRatio(r); setShowAspectMenu(false); }}
+                              className={cn(
+                                "flex items-center gap-2 w-full px-3 py-1.5 text-xs rounded-md text-left hover:bg-muted transition-colors",
+                                aspectRatio === r && "bg-muted font-semibold"
+                              )}
+                            >
+                              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-muted-foreground shrink-0">
+                                <rect x={(12 - rw) / 2} y={(12 - rh) / 2} width={rw} height={rh} rx="1" />
+                              </svg>
+                              {r}
+                            </button>
+                          );
+                        })}
                       </motion.div>
                     )}
                   </AnimatePresence>
