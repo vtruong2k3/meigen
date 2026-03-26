@@ -24,7 +24,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn, formatPromptText } from "@/lib/utils";
 import { useGenerate } from "@/hooks/use-generate";
-import type { TrendingPrompt, AspectRatio, Resolution, GenerateParams } from "@/types";
+import type { TrendingPrompt, AspectRatio, Resolution, GenerateParams, ProductAnalysis } from "@/types";
 import { MODELS, ALL_ASPECT_RATIOS, ASPECT_TO_SIZE, getSizeForModel, type ModelConfig } from "@/lib/models";
 import Image from "next/image";
 import Link from "next/link";
@@ -84,6 +84,12 @@ export function GeneratePanel({ open, mode, prompt, onClose, onGenerationStart, 
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [enhanceStyle, setEnhanceStyle] = useState<"realistic" | "anime" | "illustration">("realistic");
 
+  // Product Analysis state
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [productAnalysis, setProductAnalysis] = useState<ProductAnalysis | null>(null);
+  const [productPreview, setProductPreview] = useState<string | null>(null);
+  const productFileRef = useRef<HTMLInputElement>(null);
+
   /** Auto-describe: called when gallery image is dropped into Describe slot */
   const handleAutoDescribe = useCallback(async (imageUrl: string) => {
     setIsDescribing(true);
@@ -112,6 +118,65 @@ export function GeneratePanel({ open, mode, prompt, onClose, onGenerationStart, 
       handleAutoDescribe(imageUrl);
     }
   }, [handleAutoDescribe]);
+
+  /** Analyze product image — send current prompt as template + uploaded image */
+  const handleProductAnalyze = useCallback(async (imageUrl: string) => {
+    setIsAnalyzing(true);
+    setProductPreview(imageUrl);
+    try {
+      // Send current prompt as the template to adapt
+      const payload: Record<string, string> = { imageUrl };
+      if (promptText.trim()) {
+        payload.templatePrompt = promptText;
+      }
+
+      const res = await fetch("/api/analyze-product", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setProductAnalysis(data.analysis as ProductAnalysis);
+      // If adapted prompt returned, use it; otherwise keep current
+      if (data.adaptedPrompt) {
+        setPromptText(data.adaptedPrompt);
+        toast.success(`Adapted prompt for: ${data.analysis.name}`);
+      } else {
+        toast.success(`Detected: ${data.analysis.name}`);
+      }
+    } catch {
+      toast.error("Failed to analyze product");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  }, [promptText, setPromptText]);
+
+  /** Handle product image drop from gallery */
+  const handleProductDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    const imageUrl = e.dataTransfer.getData("text/meigen-image-url");
+    if (imageUrl) {
+      handleProductAnalyze(imageUrl);
+    }
+  }, [handleProductAnalyze]);
+
+  /** Handle product image file upload */
+  const handleProductFileUpload = useCallback(async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file");
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setProductPreview(url);
+    // Convert to base64 for API
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result as string;
+      handleProductAnalyze(base64);
+    };
+    reader.readAsDataURL(file);
+  }, [handleProductAnalyze]);
 
   /** Enhance prompt using MeiGen system prompts */
   const handleEnhance = useCallback(async () => {
@@ -359,6 +424,84 @@ export function GeneratePanel({ open, mode, prompt, onClose, onGenerationStart, 
                   </div>
                 )}
               </div>
+
+              {/* Product / Food Analysis slot */}
+              <div
+                onDrop={handleProductDrop}
+                onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "copy"; }}
+                onClick={() => !productAnalysis && productFileRef.current?.click()}
+                className={cn(
+                  "flex items-center gap-3 p-3 rounded-xl border border-dashed transition-colors",
+                  isAnalyzing
+                    ? "border-orange-400 bg-orange-50/50 dark:bg-orange-950/20"
+                    : productAnalysis
+                      ? "border-orange-400 bg-orange-50/50 dark:bg-orange-950/20"
+                      : "border-border hover:border-foreground/30 cursor-pointer"
+                )}
+              >
+                <div className={cn(
+                  "w-9 h-9 rounded-lg flex items-center justify-center shrink-0",
+                  productAnalysis ? "bg-orange-100 dark:bg-orange-900/40" : "bg-muted"
+                )}>
+                  {isAnalyzing ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-orange-400" />
+                  ) : productAnalysis ? (
+                    <CheckCircle2 className="w-4 h-4 text-orange-400" />
+                  ) : (
+                    <span className="text-sm">🍽️</span>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[13px] font-medium">
+                    {isAnalyzing ? "Analyzing..." : productAnalysis ? productAnalysis.name : "Food / Product"}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {isAnalyzing
+                      ? "AI is analyzing your food/product"
+                      : productAnalysis
+                        ? `${productAnalysis.category}${productAnalysis.brand ? ` • ${productAnalysis.brand}` : ""} • ${productAnalysis.colors.join(", ")}`
+                        : "Upload or drag food/product for AI advertising"}
+                  </p>
+                </div>
+                {productPreview && (
+                  <div className="relative w-9 h-9 rounded-lg overflow-hidden shrink-0 group/prod">
+                    <Image src={productPreview} alt="product" width={36} height={36} unoptimized className="w-full h-full object-cover" />
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setProductAnalysis(null); setProductPreview(null); setPromptText(""); }}
+                      className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover/prod:opacity-100 transition-opacity"
+                    >
+                      <X className="w-3 h-3 text-white" />
+                    </button>
+                  </div>
+                )}
+                <input
+                  ref={productFileRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleProductFileUpload(f);
+                  }}
+                />
+              </div>
+
+              {/* Product analysis info chips */}
+              {productAnalysis && (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {productAnalysis.ingredients.slice(0, 4).map((ing) => (
+                    <span
+                      key={ing}
+                      className="px-2 py-0.5 rounded-full text-[10px] bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800/40"
+                    >
+                      {ing}
+                    </span>
+                  ))}
+                  {promptText.trim() && (
+                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400">✓ Prompt adapted</span>
+                  )}
+                </div>
+              )}
 
               {/* Reference / Face slot — accepts file upload OR gallery drag */}
               <div

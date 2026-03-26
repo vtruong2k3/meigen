@@ -192,3 +192,38 @@ export interface GenerationHistoryItem {
   quality: ImageQuality;
   error?: string | null;
 }
+
+/* ── Food & Drink AI — Product Analysis ────────── */
+
+/** Result from /api/analyze-product vision analysis */
+export interface ProductAnalysis {
+  /** Product/dish name */
+  name: string;
+  /** Category for template matching */
+  category: "dish" | "beverage" | "dessert" | "snack" | "packaged";
+  /** Cuisine or origin (e.g. "Vietnamese", "Japanese") */
+  cuisine?: string;
+  /** Key ingredients or components */
+  ingredients: string[];
+  /** Dominant colors */
+  colors: string[];
+  /** Brand name (if packaged product) */
+  brand?: string;
+  /** Short description */
+  description?: string;
+}
+
+/** Response from /api/analyze-product */
+export interface AnalyzeProductResponse {
+  analysis: ProductAnalysis;
+  selectedTemplate: {
+    id: string;
+    name: string;
+  };
+  generatedPrompt: string;
+  alternativeTemplates: Array<{
+    id: string;
+    name: string;
+    label: string;
+  }>;
+}
