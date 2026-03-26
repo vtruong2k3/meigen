@@ -89,6 +89,12 @@ export function GeneratePanel({ open, mode, prompt, onClose, onGenerationStart, 
   const [productAnalysis, setProductAnalysis] = useState<ProductAnalysis | null>(null);
   const [productPreview, setProductPreview] = useState<string | null>(null);
   const productFileRef = useRef<HTMLInputElement>(null);
+  const [showRawPrompt, setShowRawPrompt] = useState(false);
+
+  // Template prompt — stored silently when user clicks "Use as Prompt"
+  const [templatePrompt, setTemplatePrompt] = useState<string | null>(null);
+  const [templateName, setTemplateName] = useState<string | null>(null);
+  const [templateImage, setTemplateImage] = useState<string | null>(null);
 
   /** Auto-describe: called when gallery image is dropped into Describe slot */
   const handleAutoDescribe = useCallback(async (imageUrl: string) => {
@@ -123,11 +129,13 @@ export function GeneratePanel({ open, mode, prompt, onClose, onGenerationStart, 
   const handleProductAnalyze = useCallback(async (imageUrl: string) => {
     setIsAnalyzing(true);
     setProductPreview(imageUrl);
+    setShowRawPrompt(false);
     try {
-      // Send current prompt as the template to adapt
+      // Send stored template prompt (from "Use as Prompt") to the API
       const payload: Record<string, string> = { imageUrl };
-      if (promptText.trim()) {
-        payload.templatePrompt = promptText;
+      const tpl = templatePrompt || promptText.trim();
+      if (tpl) {
+        payload.templatePrompt = tpl;
       }
 
       const res = await fetch("/api/analyze-product", {
@@ -137,15 +145,31 @@ export function GeneratePanel({ open, mode, prompt, onClose, onGenerationStart, 
       });
       if (!res.ok) throw new Error();
       const data = await res.json();
-      setProductAnalysis(data.analysis as ProductAnalysis);
+      console.log("[ProductAnalyze] API response:", data);
+
+      if (data.analysis) {
+        const analysis: ProductAnalysis = {
+          name: data.analysis.name || "Unknown",
+          category: data.analysis.category || "dish",
+          cuisine: data.analysis.cuisine || undefined,
+          ingredients: Array.isArray(data.analysis.ingredients) ? data.analysis.ingredients : [],
+          colors: Array.isArray(data.analysis.colors) ? data.analysis.colors : [],
+          brand: data.analysis.brand || undefined,
+          description: data.analysis.description || undefined,
+        };
+        setProductAnalysis(analysis);
+        console.log("[ProductAnalyze] Analysis set:", analysis);
+      }
+
       // If adapted prompt returned, use it; otherwise keep current
       if (data.adaptedPrompt) {
         setPromptText(data.adaptedPrompt);
-        toast.success(`Adapted prompt for: ${data.analysis.name}`);
+        toast.success(`Adapted prompt for: ${data.analysis?.name}`);
       } else {
-        toast.success(`Detected: ${data.analysis.name}`);
+        toast.success(`Detected: ${data.analysis?.name}`);
       }
-    } catch {
+    } catch (err) {
+      console.error("[ProductAnalyze] Error:", err);
       toast.error("Failed to analyze product");
     } finally {
       setIsAnalyzing(false);
@@ -250,11 +274,22 @@ export function GeneratePanel({ open, mode, prompt, onClose, onGenerationStart, 
     setUploadedImage2(null);
     setImagePreview(null);
     setImagePreview2(null);
+    setProductAnalysis(null);
+    setProductPreview(null);
+    setShowRawPrompt(false);
 
     if (mode === "prompt") {
-      setPromptText(formatPromptText(prompt.prompt));
+      // Store template silently — DON'T show in textarea
+      const formatted = formatPromptText(prompt.prompt);
+      setTemplatePrompt(formatted);
+      setTemplateName(prompt.author_name ? `${prompt.author_name}'s prompt` : "Gallery prompt");
+      setTemplateImage(prompt.image || null);
+      setPromptText(formatted); // still needed internally for generate
       setRefImage(null);
     } else if (mode === "ref") {
+      setTemplatePrompt(null);
+      setTemplateName(null);
+      setTemplateImage(null);
       setPromptText("");
       setRefImage(prompt.image);
     }
@@ -467,7 +502,7 @@ export function GeneratePanel({ open, mode, prompt, onClose, onGenerationStart, 
                   <div className="relative w-9 h-9 rounded-lg overflow-hidden shrink-0 group/prod">
                     <Image src={productPreview} alt="product" width={36} height={36} unoptimized className="w-full h-full object-cover" />
                     <button
-                      onClick={(e) => { e.stopPropagation(); setProductAnalysis(null); setProductPreview(null); setPromptText(""); }}
+                      onClick={(e) => { e.stopPropagation(); setProductAnalysis(null); setProductPreview(null); setShowRawPrompt(false); setPromptText(""); }}
                       className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover/prod:opacity-100 transition-opacity"
                     >
                       <X className="w-3 h-3 text-white" />
@@ -613,15 +648,129 @@ export function GeneratePanel({ open, mode, prompt, onClose, onGenerationStart, 
                       <p className="text-[12px] text-cyan-600 dark:text-cyan-400">Enhancing prompt...</p>
                     </div>
                   )}
-                  <Textarea
-                    ref={promptRef}
-                    value={promptText}
-                    onChange={(e) => setPromptText(e.target.value)}
-                    placeholder={isDescribing ? "" : "Describe what you want to generate... or drop an image above"}
-                    className="min-h-[180px] max-h-[300px] resize-none text-[13px] leading-relaxed rounded-xl border-border focus-visible:ring-1 focus-visible:ring-foreground/20 p-3"
-                  />
+                  {/* Analyzing product overlay */}
+                  {isAnalyzing && (
+                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 rounded-xl bg-background/80 backdrop-blur-sm border border-orange-500/30">
+                      <Loader2 className="w-5 h-5 animate-spin text-orange-400" />
+                      <p className="text-[12px] text-orange-600 dark:text-orange-400">Analyzing product...</p>
+                    </div>
+                  )}
+
+                  {/* State 1: Product Analysis Card — after uploading + analyzing */}
+                  {productAnalysis && !showRawPrompt ? (
+                    <div className="min-h-[180px] max-h-[300px] overflow-auto rounded-xl border border-orange-200 dark:border-orange-800/40 bg-orange-50/30 dark:bg-orange-950/10 p-3 space-y-2.5">
+                      {/* Product header */}
+                      <div className="flex items-center gap-2">
+                        {productPreview && (
+                          <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0">
+                            <Image src={productPreview} alt="" width={40} height={40} unoptimized className="w-full h-full object-cover" />
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[14px] font-semibold truncate">{productAnalysis.name}</p>
+                          <p className="text-[11px] text-muted-foreground">
+                            {productAnalysis.category}{productAnalysis.cuisine ? ` • ${productAnalysis.cuisine}` : ""}{productAnalysis.brand ? ` • ${productAnalysis.brand}` : ""}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Description */}
+                      {productAnalysis.description && (
+                        <p className="text-[12px] text-muted-foreground italic">{productAnalysis.description}</p>
+                      )}
+
+                      {/* Colors */}
+                      {productAnalysis.colors.length > 0 && (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] text-muted-foreground font-medium">Colors:</span>
+                          {productAnalysis.colors.map((c) => (
+                            <span key={c} className="px-1.5 py-0.5 rounded text-[10px] bg-muted border border-border">{c}</span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Ingredients */}
+                      {productAnalysis.ingredients.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-1">
+                          <span className="text-[10px] text-muted-foreground font-medium">Details:</span>
+                          {productAnalysis.ingredients.map((ing) => (
+                            <span key={ing} className="px-1.5 py-0.5 rounded-full text-[10px] bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800/40">{ing}</span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Template info */}
+                      {templateName && (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] text-muted-foreground">📋 Template:</span>
+                          <span className="text-[10px] font-medium">{templateName}</span>
+                        </div>
+                      )}
+
+                      {/* Status */}
+                      <div className="flex items-center justify-between pt-1 border-t border-orange-200/50 dark:border-orange-800/20">
+                        <span className="text-[10px] text-emerald-600 dark:text-emerald-400">✓ Prompt adapted — ready to generate</span>
+                        <button
+                          onClick={() => setShowRawPrompt(true)}
+                          className="text-[10px] text-muted-foreground hover:text-foreground underline transition-colors"
+                        >
+                          Show prompt
+                        </button>
+                      </div>
+                    </div>
+
+                  /* State 2: Template loaded card — after "Use as Prompt" but before product upload */
+                  ) : templatePrompt && !productAnalysis && !showRawPrompt ? (
+                    <div className="min-h-[180px] max-h-[300px] rounded-xl border border-cyan-200 dark:border-cyan-800/40 bg-cyan-50/30 dark:bg-cyan-950/10 p-4 flex flex-col items-center justify-center gap-3">
+                      {templateImage && (
+                        <div className="w-16 h-16 rounded-xl overflow-hidden border-2 border-cyan-300/50 dark:border-cyan-700/50 shadow-sm">
+                          <Image src={templateImage} alt="" width={64} height={64} unoptimized className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                      <div className="text-center">
+                        <p className="text-[13px] font-semibold">📋 Template Loaded</p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">{templateName || "Gallery prompt"}</p>
+                      </div>
+                      <p className="text-[11px] text-cyan-600 dark:text-cyan-400 text-center">
+                        Upload food/product image above to adapt this template
+                      </p>
+                      <button
+                        onClick={() => setShowRawPrompt(true)}
+                        className="text-[10px] text-muted-foreground hover:text-foreground underline transition-colors"
+                      >
+                        View raw prompt
+                      </button>
+                    </div>
+
+                  /* State 3: Normal textarea — no template, no analysis */
+                  ) : (
+                    <Textarea
+                      ref={promptRef}
+                      value={promptText}
+                      onChange={(e) => {
+                        setPromptText(e.target.value);
+                        // If user manually edits, clear template mode
+                        if (templatePrompt && e.target.value !== templatePrompt) {
+                          setTemplatePrompt(null);
+                          setTemplateName(null);
+                          setTemplateImage(null);
+                        }
+                      }}
+                      placeholder={isDescribing ? "" : "Describe what you want to generate... or drop an image above"}
+                      className="min-h-[180px] max-h-[300px] resize-none text-[13px] leading-relaxed rounded-xl border-border focus-visible:ring-1 focus-visible:ring-foreground/20 p-3"
+                    />
+                  )}
                   {/* Enhance + action icons */}
-                  <div className="flex items-center justify-end gap-1.5 mt-1.5">
+                  <div className="flex items-center justify-between gap-1.5 mt-1.5">
+                    {showRawPrompt && (productAnalysis || templatePrompt) && (
+                      <button
+                        onClick={() => setShowRawPrompt(false)}
+                        className="flex items-center gap-1 px-2 py-1 text-[11px] text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/30 rounded-md transition-colors"
+                      >
+                        ← Back
+                      </button>
+                    )}
+                    <div className="flex-1" />
                     <button
                       onClick={handleEnhance}
                       disabled={!promptText.trim() || isEnhancing}
@@ -635,6 +784,7 @@ export function GeneratePanel({ open, mode, prompt, onClose, onGenerationStart, 
                       {isEnhancing ? "Enhancing..." : "Enhance"}
                     </button>
                   </div>
+                
                 </div>
 
                 {/* @mention chips — shown when reference images are uploaded */}
