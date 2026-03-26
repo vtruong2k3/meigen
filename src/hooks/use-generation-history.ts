@@ -1,37 +1,82 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback } from "react";
+import { useSession } from "next-auth/react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { GenerationHistoryItem, GenerateTaskStatus, ImageQuality } from "@/types";
 
-const STORAGE_KEY = "meigen_generations";
-const MAX_ITEMS = 50;
-
-function loadItems(): GenerationHistoryItem[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as GenerationHistoryItem[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveItems(items: GenerationHistoryItem[]) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  } catch {
-    // storage full
-  }
-}
-
 export function useGenerationHistory() {
-  const [items, setItems] = useState<GenerationHistoryItem[]>([]);
+  const { data: session } = useSession();
+  const queryClient = useQueryClient();
+  const isLoggedIn = !!session?.user;
 
-  useEffect(() => {
-    setItems(loadItems());
-  }, []);
+  const { data: generations = [] } = useQuery<GenerationHistoryItem[]>({
+    queryKey: ["generations"],
+    queryFn: async () => {
+      const res = await fetch("/api/generations");
+      if (!res.ok) return [];
+      const data = await res.json();
+      return data.map((g: Record<string, unknown>) => ({
+        id: g.id as string,
+        taskId: g.taskId as string,
+        prompt: g.prompt as string,
+        imageUrl: (g.imageUrl as string) || null,
+        status: g.status as GenerateTaskStatus,
+        progress: g.progress as number,
+        createdAt: new Date(g.createdAt as string).getTime(),
+        totalTime: (g.totalTime as number) || null,
+        width: g.width as number,
+        height: g.height as number,
+        quality: g.quality as ImageQuality,
+        error: (g.error as string) || null,
+      }));
+    },
+    enabled: isLoggedIn,
+  });
 
-  /** Add a new generation to history */
+  const addMutation = useMutation({
+    mutationFn: async (params: {
+      taskId: string;
+      prompt: string;
+      width: number;
+      height: number;
+      quality: ImageQuality;
+    }) => {
+      const res = await fetch("/api/generations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(params),
+      });
+      return res.json();
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["generations"] }),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (params: {
+      taskId: string;
+      status?: GenerateTaskStatus;
+      progress?: number;
+      imageUrl?: string;
+      totalTime?: number;
+      error?: string;
+    }) => {
+      await fetch("/api/generations", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(params),
+      });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["generations"] }),
+  });
+
+  const clearMutation = useMutation({
+    mutationFn: async () => {
+      await fetch("/api/generations", { method: "DELETE" });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["generations"] }),
+  });
+
   const addGeneration = useCallback(
     (params: {
       taskId: string;
@@ -40,30 +85,13 @@ export function useGenerationHistory() {
       height: number;
       quality: ImageQuality;
     }) => {
-      const item: GenerationHistoryItem = {
-        id: crypto.randomUUID(),
-        taskId: params.taskId,
-        prompt: params.prompt,
-        imageUrl: null,
-        status: "PROCESSING",
-        progress: 0,
-        createdAt: Date.now(),
-        totalTime: null,
-        width: params.width,
-        height: params.height,
-        quality: params.quality,
-      };
-      setItems((prev) => {
-        const next = [item, ...prev].slice(0, MAX_ITEMS);
-        saveItems(next);
-        return next;
-      });
-      return item.id;
+      if (!isLoggedIn) return params.taskId;
+      addMutation.mutate(params);
+      return params.taskId;
     },
-    []
+    [isLoggedIn, addMutation]
   );
 
-  /** Update a generation's status/progress */
   const updateGeneration = useCallback(
     (
       taskId: string,
@@ -74,27 +102,20 @@ export function useGenerationHistory() {
         totalTime?: number;
       }
     ) => {
-      setItems((prev) => {
-        const next = prev.map((item) =>
-          item.taskId === taskId ? { ...item, ...update } : item
-        );
-        saveItems(next);
-        return next;
-      });
+      if (isLoggedIn) updateMutation.mutate({ taskId, ...update });
     },
-    []
+    [isLoggedIn, updateMutation]
   );
 
   const clearGenerations = useCallback(() => {
-    setItems([]);
-    saveItems([]);
-  }, []);
+    if (isLoggedIn) clearMutation.mutate();
+  }, [isLoggedIn, clearMutation]);
 
   return {
-    generations: items,
+    generations,
     addGeneration,
     updateGeneration,
     clearGenerations,
-    count: items.length,
+    count: generations.length,
   };
 }

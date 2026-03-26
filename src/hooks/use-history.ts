@@ -1,57 +1,57 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback } from "react";
+import { useSession } from "next-auth/react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { HistoryItem, TrendingPrompt } from "@/types";
 import { trendingPrompts } from "@/lib/mock-data";
 
-const STORAGE_KEY = "meigen_history";
-const MAX_HISTORY = 100;
-
-function loadHistory(): HistoryItem[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as HistoryItem[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveHistory(items: HistoryItem[]) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  } catch {
-    // storage full or unavailable
-  }
-}
-
 export function useHistory() {
-  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const { data: session } = useSession();
+  const queryClient = useQueryClient();
+  const isLoggedIn = !!session?.user;
 
-  // Load from localStorage on mount
-  useEffect(() => {
-    setHistory(loadHistory());
-  }, []);
+  const { data: history = [] } = useQuery<HistoryItem[]>({
+    queryKey: ["history"],
+    queryFn: async () => {
+      const res = await fetch("/api/history");
+      if (!res.ok) return [];
+      const data = await res.json();
+      return data.map((h: { promptId: string; viewedAt: string }) => ({
+        promptId: h.promptId,
+        viewedAt: new Date(h.viewedAt).getTime(),
+      }));
+    },
+    enabled: isLoggedIn,
+  });
 
-  /** Record a prompt view — moves to top if already in history */
-  const addToHistory = useCallback((promptId: string) => {
-    setHistory((prev) => {
-      const filtered = prev.filter((h) => h.promptId !== promptId);
-      const next = [{ promptId, viewedAt: Date.now() }, ...filtered].slice(
-        0,
-        MAX_HISTORY
-      );
-      saveHistory(next);
-      return next;
-    });
-  }, []);
+  const addMutation = useMutation({
+    mutationFn: async (promptId: string) => {
+      await fetch("/api/history", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ promptId }),
+      });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["history"] }),
+  });
+
+  const clearMutation = useMutation({
+    mutationFn: async () => {
+      await fetch("/api/history", { method: "DELETE" });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["history"] }),
+  });
+
+  const addToHistory = useCallback(
+    (promptId: string) => { if (isLoggedIn) addMutation.mutate(promptId); },
+    [isLoggedIn, addMutation]
+  );
 
   const clearHistory = useCallback(() => {
-    setHistory([]);
-    saveHistory([]);
-  }, []);
+    if (isLoggedIn) clearMutation.mutate();
+  }, [isLoggedIn, clearMutation]);
 
-  /** Resolve history IDs to full TrendingPrompt objects */
   const historyPrompts: TrendingPrompt[] = history
     .map((h) => trendingPrompts.find((p) => p.id === h.promptId))
     .filter((p): p is TrendingPrompt => p !== undefined);

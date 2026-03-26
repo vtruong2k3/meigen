@@ -5,6 +5,7 @@ import "react-photo-view/dist/react-photo-view.css";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "sonner";
+import { Providers } from "@/components/providers";
 
 const barlowCondensed = Barlow_Condensed({
   subsets: ["latin", "vietnamese"],
@@ -41,24 +42,27 @@ export default function RootLayout({
             '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif',
         }}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-          <Toaster
-            position="bottom-center"
-            richColors
-            toastOptions={{
-              style: {
-                borderRadius: "12px",
-              },
-            }}
-          />
-        </ThemeProvider>
+        <Providers>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            {children}
+            <Toaster
+              position="bottom-center"
+              richColors
+              toastOptions={{
+                style: {
+                  borderRadius: "12px",
+                },
+              }}
+            />
+          </ThemeProvider>
+        </Providers>
       </body>
     </html>
   );
 }
+

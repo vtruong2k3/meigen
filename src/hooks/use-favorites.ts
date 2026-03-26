@@ -1,71 +1,72 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback } from "react";
+import { useSession } from "next-auth/react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { FavoriteItem, TrendingPrompt } from "@/types";
 import { trendingPrompts } from "@/lib/mock-data";
 
-const STORAGE_KEY = "meigen_favorites";
-
-function loadFavorites(): FavoriteItem[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as FavoriteItem[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveFavorites(items: FavoriteItem[]) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  } catch {
-    // storage full or unavailable
-  }
-}
-
 export function useFavorites() {
-  const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
+  const { data: session } = useSession();
+  const queryClient = useQueryClient();
+  const isLoggedIn = !!session?.user;
 
-  // Load from localStorage on mount
-  useEffect(() => {
-    setFavorites(loadFavorites());
-  }, []);
+  const { data: favorites = [] } = useQuery<FavoriteItem[]>({
+    queryKey: ["favorites"],
+    queryFn: async () => {
+      const res = await fetch("/api/favorites");
+      if (!res.ok) return [];
+      const data = await res.json();
+      return data.map((f: { promptId: string; addedAt: string }) => ({
+        promptId: f.promptId,
+        addedAt: new Date(f.addedAt).getTime(),
+      }));
+    },
+    enabled: isLoggedIn,
+  });
 
-  const addFavorite = useCallback((promptId: string) => {
-    setFavorites((prev) => {
-      if (prev.some((f) => f.promptId === promptId)) return prev;
-      const next = [{ promptId, addedAt: Date.now() }, ...prev];
-      saveFavorites(next);
-      return next;
-    });
-  }, []);
+  const addMutation = useMutation({
+    mutationFn: async (promptId: string) => {
+      await fetch("/api/favorites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ promptId }),
+      });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["favorites"] }),
+  });
 
-  const removeFavorite = useCallback((promptId: string) => {
-    setFavorites((prev) => {
-      const next = prev.filter((f) => f.promptId !== promptId);
-      saveFavorites(next);
-      return next;
-    });
-  }, []);
+  const removeMutation = useMutation({
+    mutationFn: async (promptId: string) => {
+      await fetch(`/api/favorites?promptId=${promptId}`, { method: "DELETE" });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["favorites"] }),
+  });
 
-  const toggleFavorite = useCallback((promptId: string) => {
-    setFavorites((prev) => {
-      const exists = prev.some((f) => f.promptId === promptId);
-      const next = exists
-        ? prev.filter((f) => f.promptId !== promptId)
-        : [{ promptId, addedAt: Date.now() }, ...prev];
-      saveFavorites(next);
-      return next;
-    });
-  }, []);
+  const addFavorite = useCallback(
+    (promptId: string) => { if (isLoggedIn) addMutation.mutate(promptId); },
+    [isLoggedIn, addMutation]
+  );
+
+  const removeFavorite = useCallback(
+    (promptId: string) => { if (isLoggedIn) removeMutation.mutate(promptId); },
+    [isLoggedIn, removeMutation]
+  );
+
+  const toggleFavorite = useCallback(
+    (promptId: string) => {
+      const exists = favorites.some((f) => f.promptId === promptId);
+      if (exists) removeFavorite(promptId);
+      else addFavorite(promptId);
+    },
+    [favorites, addFavorite, removeFavorite]
+  );
 
   const isFavorite = useCallback(
     (promptId: string) => favorites.some((f) => f.promptId === promptId),
     [favorites]
   );
 
-  /** Resolve favorite IDs to full TrendingPrompt objects */
   const favoritePrompts: TrendingPrompt[] = favorites
     .map((f) => trendingPrompts.find((p) => p.id === f.promptId))
     .filter((p): p is TrendingPrompt => p !== undefined);

@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import { categoryItems } from "@/lib/mock-data";
 import { useTheme } from "next-themes";
+import { useSession, signOut } from "next-auth/react";
 import {
   Home,
   Search,
@@ -14,6 +15,8 @@ import {
   Gift,
   Sun,
   Moon,
+  LogOut,
+  User,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -32,6 +35,7 @@ export function Sidebar({ activeCategory, currentView, onCategoryChange, onGetSt
   const [tagsOpen, setTagsOpen] = useState(true);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const { data: session } = useSession();
 
   useEffect(() => {
     setMounted(true);
@@ -172,19 +176,43 @@ export function Sidebar({ activeCategory, currentView, onCategoryChange, onGetSt
           </div>
         </div>
 
-        {/* Get Started + Free Credits */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={onGetStarted}
-            className="flex-1 py-2.5 px-4 bg-primary text-primary-foreground rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors"
-          >
-            Get Started
-          </button>
-          <span className="text-xs text-muted-foreground whitespace-nowrap">
-            Free Credits Daily
-          </span>
-        </div>
+        {/* User section — session aware */}
+        {session?.user ? (
+          <div className="flex items-center gap-2 p-2 rounded-xl border border-border bg-muted/30">
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              {session.user.image ? (
+                <img src={session.user.image} alt="" className="w-8 h-8 rounded-full object-cover" />
+              ) : (
+                <User className="w-4 h-4 text-primary" />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-medium truncate">{session.user.name || "User"}</p>
+              <p className="text-[10px] text-muted-foreground truncate">{session.user.email}</p>
+            </div>
+            <button
+              onClick={() => signOut()}
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              title="Sign out"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onGetStarted}
+              className="flex-1 py-2.5 px-4 bg-primary text-primary-foreground rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors"
+            >
+              Get Started
+            </button>
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              Free Credits Daily
+            </span>
+          </div>
+        )}
       </div>
     </aside>
   );
 }
+
