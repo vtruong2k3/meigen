@@ -24,7 +24,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn, formatPromptText } from "@/lib/utils";
 import { useGenerate } from "@/hooks/use-generate";
-import type { TrendingPrompt, AspectRatio, Resolution, GenerateParams, ProductAnalysis } from "@/types";
+import type { TrendingPrompt, AspectRatio, Resolution, GenerateParams, ProductAnalysis, TemplateField } from "@/types";
 import { MODELS, ALL_ASPECT_RATIOS, ASPECT_TO_SIZE, getSizeForModel, type ModelConfig } from "@/lib/models";
 import Image from "next/image";
 import Link from "next/link";
@@ -95,6 +95,13 @@ export function GeneratePanel({ open, mode, prompt, onClose, onGenerationStart, 
   const [templatePrompt, setTemplatePrompt] = useState<string | null>(null);
   const [templateName, setTemplateName] = useState<string | null>(null);
   const [templateImage, setTemplateImage] = useState<string | null>(null);
+
+  // Edit form state
+  const [editMode, setEditMode] = useState(false);
+  const [editFields, setEditFields] = useState<TemplateField[]>([]);
+  const [editValues, setEditValues] = useState<Record<string, string>>({});
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [isApplying, setIsApplying] = useState(false);
 
   /** Auto-describe: called when gallery image is dropped into Describe slot */
   const handleAutoDescribe = useCallback(async (imageUrl: string) => {
@@ -719,27 +726,145 @@ export function GeneratePanel({ open, mode, prompt, onClose, onGenerationStart, 
                       </div>
                     </div>
 
-                  /* State 2: Template loaded card — after "Use as Prompt" but before product upload */
+                  /* State 2: Template loaded card OR edit form */
                   ) : templatePrompt && !productAnalysis && !showRawPrompt ? (
-                    <div className="min-h-[180px] max-h-[300px] rounded-xl border border-cyan-200 dark:border-cyan-800/40 bg-cyan-50/30 dark:bg-cyan-950/10 p-4 flex flex-col items-center justify-center gap-3">
-                      {templateImage && (
-                        <div className="w-16 h-16 rounded-xl overflow-hidden border-2 border-cyan-300/50 dark:border-cyan-700/50 shadow-sm">
-                          <Image src={templateImage} alt="" width={64} height={64} unoptimized className="w-full h-full object-cover" />
+                    <div className="min-h-[180px] max-h-[300px] overflow-auto rounded-xl border border-cyan-200 dark:border-cyan-800/40 bg-cyan-50/30 dark:bg-cyan-950/10 p-3">
+                      {/* Edit Form — dynamic fields */}
+                      {editMode && editFields.length > 0 ? (
+                        <div className="space-y-2.5">
+                          <div className="flex items-center justify-between">
+                            <p className="text-[13px] font-semibold">✏️ Edit Template</p>
+                            <button
+                              onClick={() => setEditMode(false)}
+                              className="text-[10px] text-muted-foreground hover:text-foreground"
+                            >
+                              ← Back
+                            </button>
+                          </div>
+                          {editFields.map((f) => (
+                            <div key={f.field} className="space-y-1">
+                              <label className="text-[11px] font-medium text-muted-foreground">{f.label}</label>
+                              {f.type === "list" ? (
+                                <textarea
+                                  value={editValues[f.field] || ""}
+                                  onChange={(e) => setEditValues((prev) => ({ ...prev, [f.field]: e.target.value }))}
+                                  placeholder={f.placeholder}
+                                  rows={2}
+                                  className="w-full text-[12px] px-2.5 py-1.5 rounded-lg border border-border bg-background focus:ring-1 focus:ring-cyan-400/50 focus:border-cyan-400 resize-none"
+                                />
+                              ) : (
+                                <input
+                                  type="text"
+                                  value={editValues[f.field] || ""}
+                                  onChange={(e) => setEditValues((prev) => ({ ...prev, [f.field]: e.target.value }))}
+                                  placeholder={f.placeholder}
+                                  className="w-full text-[12px] px-2.5 py-1.5 rounded-lg border border-border bg-background focus:ring-1 focus:ring-cyan-400/50 focus:border-cyan-400"
+                                />
+                              )}
+                            </div>
+                          ))}
+                          <button
+                            onClick={async () => {
+                              if (!templatePrompt) return;
+                              setIsApplying(true);
+                              try {
+                                const res = await fetch("/api/analyze-product", {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ templatePrompt, manualFields: editValues }),
+                                });
+                                if (!res.ok) throw new Error();
+                                const data = await res.json();
+                                if (data.analysis) {
+                                  setProductAnalysis({
+                                    name: data.analysis.name || "Custom",
+                                    category: data.analysis.category || "dish",
+                                    cuisine: data.analysis.cuisine || undefined,
+                                    ingredients: Array.isArray(data.analysis.ingredients) ? data.analysis.ingredients : [],
+                                    colors: Array.isArray(data.analysis.colors) ? data.analysis.colors : [],
+                                    brand: data.analysis.brand || undefined,
+                                    description: data.analysis.description || undefined,
+                                  });
+                                }
+                                if (data.adaptedPrompt) {
+                                  setPromptText(data.adaptedPrompt);
+                                  toast.success(`Prompt adapted for: ${data.analysis?.name || "custom product"}`);
+                                }
+                                setEditMode(false);
+                              } catch {
+                                toast.error("Failed to adapt prompt");
+                              } finally {
+                                setIsApplying(false);
+                              }
+                            }}
+                            disabled={isApplying}
+                            className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-[12px] font-medium transition-colors disabled:opacity-50"
+                          >
+                            {isApplying ? (
+                              <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Applying...</>
+                            ) : (
+                              "✨ Apply Changes"
+                            )}
+                          </button>
+                        </div>
+
+                      /* Template loaded — initial state with Edit button */
+                      ) : (
+                        <div className="flex flex-col items-center justify-center gap-3 py-2">
+                          {templateImage && (
+                            <div className="w-16 h-16 rounded-xl overflow-hidden border-2 border-cyan-300/50 dark:border-cyan-700/50 shadow-sm">
+                              <Image src={templateImage} alt="" width={64} height={64} unoptimized className="w-full h-full object-cover" />
+                            </div>
+                          )}
+                          <div className="text-center">
+                            <p className="text-[13px] font-semibold">📋 Template Loaded</p>
+                            <p className="text-[11px] text-muted-foreground mt-0.5">{templateName || "Gallery prompt"}</p>
+                          </div>
+                          <p className="text-[11px] text-cyan-600 dark:text-cyan-400 text-center">
+                            Upload product image above — or edit manually below
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={async () => {
+                                if (!templatePrompt) return;
+                                setIsExtracting(true);
+                                try {
+                                  const res = await fetch("/api/extract-fields", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ templatePrompt }),
+                                  });
+                                  if (!res.ok) throw new Error();
+                                  const { fields } = await res.json();
+                                  setEditFields(fields);
+                                  const values: Record<string, string> = {};
+                                  for (const f of fields) values[f.field] = f.value;
+                                  setEditValues(values);
+                                  setEditMode(true);
+                                } catch {
+                                  toast.error("Failed to extract editable fields");
+                                } finally {
+                                  setIsExtracting(false);
+                                }
+                              }}
+                              disabled={isExtracting}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-[11px] font-medium transition-colors disabled:opacity-50"
+                            >
+                              {isExtracting ? (
+                                <><Loader2 className="w-3 h-3 animate-spin" /> Extracting...</>
+                              ) : (
+                                "✏️ Edit Template"
+                              )}
+                            </button>
+                            <button
+                              onClick={() => setShowRawPrompt(true)}
+                              className="px-3 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                            >
+                              View prompt
+                            </button>
+                          </div>
                         </div>
                       )}
-                      <div className="text-center">
-                        <p className="text-[13px] font-semibold">📋 Template Loaded</p>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">{templateName || "Gallery prompt"}</p>
-                      </div>
-                      <p className="text-[11px] text-cyan-600 dark:text-cyan-400 text-center">
-                        Upload food/product image above to adapt this template
-                      </p>
-                      <button
-                        onClick={() => setShowRawPrompt(true)}
-                        className="text-[10px] text-muted-foreground hover:text-foreground underline transition-colors"
-                      >
-                        View raw prompt
-                      </button>
                     </div>
 
                   /* State 3: Normal textarea — no template, no analysis */

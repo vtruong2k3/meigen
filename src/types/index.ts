@@ -213,17 +213,17 @@ export interface ProductAnalysis {
   description?: string;
 }
 
-/** Response from /api/analyze-product */
-export interface AnalyzeProductResponse {
-  analysis: ProductAnalysis;
-  selectedTemplate: {
-    id: string;
-    name: string;
-  };
-  generatedPrompt: string;
-  alternativeTemplates: Array<{
-    id: string;
-    name: string;
-    label: string;
-  }>;
+/** Editable field extracted from a template prompt by AI */
+export interface TemplateField {
+  /** Machine key, e.g. "dish_name", "ingredients" */
+  field: string;
+  /** Human-readable label, e.g. "Dish Name" */
+  label: string;
+  /** Current value from the template */
+  value: string;
+  /** Input type hint */
+  type: "text" | "list" | "color";
+  /** Placeholder hint */
+  placeholder?: string;
 }
+

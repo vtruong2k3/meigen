@@ -131,13 +131,88 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const imageUrl = body?.imageUrl as string | undefined;
     const templatePrompt = body?.templatePrompt as string | undefined;
-
-    if (!imageUrl) {
-      return NextResponse.json({ error: "No imageUrl provided" }, { status: 400 });
-    }
+    const manualFields = body?.manualFields as Record<string, string> | undefined;
 
     if (!API_KEY || !CHAINHUB_CHAT_URL) {
       return NextResponse.json({ error: "API not configured" }, { status: 500 });
+    }
+
+    // ═══ Mode 3: Manual fields (from edit form) ═══
+    if (manualFields && templatePrompt) {
+      console.log("[analyze-product] Manual mode — fields:", Object.keys(manualFields).join(", "));
+
+      const manualReplaceInput = `CRITICAL: Your output must be almost IDENTICAL to the template below. You are doing a FIND-AND-REPLACE operation, NOT rewriting.
+
+STEP 1: Copy the ENTIRE template below as-is — every single word, every line, every formatting character.
+STEP 2: Find the OLD product-specific words and replace them with the NEW values from the user's fields.
+STEP 3: Output the result. It should look 95%+ identical to the original template.
+
+---TEMPLATE (copy this EXACTLY, then do find-replace)---
+${templatePrompt}
+---END TEMPLATE---
+
+USER'S REPLACEMENT VALUES:
+${Object.entries(manualFields).map(([key, val]) => `- ${key}: "${val}"`).join("\n")}
+
+FIND-AND-REPLACE RULES:
+- If product_name changed: find ALL mentions of the old product name → replace with new name
+- If brand changed: find ALL mentions of the old brand → replace with new brand
+- If ingredients changed: find ingredient words → replace with new ingredients
+- If colors changed: find product-specific color words → replace with new colors
+- If container changed: find container words (carton, bottle, can) → replace with new container
+
+PRESERVATION RULES (DO NOT CHANGE THESE):
+- Background description → keep EXACTLY as-is
+- Lighting/camera/composition → keep EXACTLY as-is
+- Visual effects (splash, floating, levitating) → keep the effect, just change what's floating
+- Resolution, aspect ratio, style keywords → keep EXACTLY as-is
+- ALL structural formatting → keep EXACTLY as-is
+
+EXAMPLE:
+Template: "Nestlé Chocolate Milk carton with brown chocolate splash, floating cocoa beans and chocolate pieces, dark brown gradient background"
+User changes: product_name="Coca-Cola", brand="Coca-Cola", ingredients="ice cubes, lime slices", colors="red, white"
+CORRECT output: "Coca-Cola can with red cola splash, floating ice cubes and lime slices, dark brown gradient background"
+WRONG output: "Coca-Cola with red background and ice" (this changed background and rewrote everything)
+
+Output the edited prompt ONLY. No explanation.`;
+
+      let adaptedPrompt: string | null = null;
+      for (const model of MODELS) {
+        adaptedPrompt = await callChat(model, REPLACE_SYSTEM_PROMPT, manualReplaceInput, 4000);
+        if (adaptedPrompt) {
+          console.log(`[analyze-product] Manual adaptation via ${model}: OK`);
+          break;
+        }
+      }
+
+      if (!adaptedPrompt) {
+        return NextResponse.json({ error: "Prompt adaptation failed" }, { status: 503 });
+      }
+
+      // Clean up markdown fences
+      adaptedPrompt = adaptedPrompt
+        .replace(/^```(?:json)?\n?/i, "")
+        .replace(/\n?```$/i, "")
+        .trim();
+
+      // Build a ProductAnalysis-like object from manual fields
+      const analysis: ProductAnalysis = {
+        name: manualFields.product_name || "Custom Product",
+        category: "dish",
+        cuisine: manualFields.cuisine || undefined,
+        ingredients: manualFields.ingredients?.split(",").map((s: string) => s.trim()).filter(Boolean) || [],
+        colors: manualFields.colors?.split(",").map((s: string) => s.trim()).filter(Boolean) || [],
+        brand: manualFields.brand || undefined,
+        description: `Manually edited from template`,
+      };
+
+      console.log(`[analyze-product] Manual adapted: ${adaptedPrompt.slice(0, 100)}...`);
+      return NextResponse.json({ analysis, adaptedPrompt });
+    }
+
+    // ═══ Mode 1 & 2: Image-based analysis ═══
+    if (!imageUrl) {
+      return NextResponse.json({ error: "No imageUrl or manualFields provided" }, { status: 400 });
     }
 
     console.log("[analyze-product] Analyzing:", imageUrl.slice(0, 60) + "...");
@@ -243,3 +318,4 @@ INSTRUCTIONS:
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
