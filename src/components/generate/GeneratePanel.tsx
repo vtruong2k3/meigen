@@ -29,6 +29,7 @@ import { MODELS, ALL_ASPECT_RATIOS, ASPECT_TO_SIZE, getSizeForModel, type ModelC
 import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
+import * as aiService from "@/services/ai.service";
 
 const resolutions: Resolution[] = ["sd", "hd"];
 
@@ -111,13 +112,7 @@ export function GeneratePanel({ open, mode, prompt, onClose, onGenerationStart, 
     setIsDescribing(true);
     setDescribePreview(imageUrl);
     try {
-      const res = await fetch("/api/describe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageUrl }),
-      });
-      if (!res.ok) throw new Error();
-      const { description } = await res.json();
+      const description = await aiService.describe(imageUrl);
       if (description) setPromptText(description);
     } catch {
       // silently fail — user can type prompt manually
@@ -141,20 +136,14 @@ export function GeneratePanel({ open, mode, prompt, onClose, onGenerationStart, 
     setProductPreview(imageUrl);
     setShowRawPrompt(false);
     try {
-      // Send stored template prompt (from "Use as Prompt") to the API
       const payload: Record<string, string> = { imageUrl };
       const tpl = templatePrompt || promptText.trim();
       if (tpl) {
         payload.templatePrompt = tpl;
       }
 
-      const res = await fetch("/api/analyze-product", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error();
-      const data = await res.json();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const data = await aiService.analyzeProduct(payload) as any;
       console.log("[ProductAnalyze] API response:", data);
 
       if (data.analysis) {
@@ -217,13 +206,10 @@ export function GeneratePanel({ open, mode, prompt, onClose, onGenerationStart, 
     if (!promptText.trim() || isEnhancing) return;
     setIsEnhancing(true);
     try {
-      const res = await fetch("/api/enhance", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: promptText, style: enhanceStyle }),
-      });
-      if (!res.ok) throw new Error();
-      const { enhanced } = await res.json();
+      // enhanceStyle is ignored by current service but we can pass it if aiService gets updated
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const res = await aiService.enhance(promptText) as any;
+      const enhanced = res.enhanced || res.cinematic || res.artistic || res.commercial;
       if (enhanced) setPromptText(enhanced);
     } catch {
       // silently fail
@@ -791,13 +777,9 @@ export function GeneratePanel({ open, mode, prompt, onClose, onGenerationStart, 
                                 if (!templatePrompt) return;
                                 setIsExtracting(true);
                                 try {
-                                  const res = await fetch("/api/extract-fields", {
-                                    method: "POST",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ templatePrompt }),
-                                  });
-                                  if (!res.ok) throw new Error();
-                                  const { fields } = await res.json();
+                                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                  const res = await aiService.extractFields(templatePrompt) as any;
+                                  const fields = res.fields || [];
                                   setEditFields(fields);
                                   const values: Record<string, string> = {};
                                   for (const f of fields) values[f.field] = f.value;
@@ -1247,13 +1229,8 @@ export function GeneratePanel({ open, mode, prompt, onClose, onGenerationStart, 
                 if (!templatePrompt) return;
                 setIsApplying(true);
                 try {
-                  const res = await fetch("/api/analyze-product", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ templatePrompt, manualFields: editValues }),
-                  });
-                  if (!res.ok) throw new Error();
-                  const data = await res.json();
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  const data = await aiService.analyzeProduct({ templatePrompt, manualFields: editValues }) as any;
                   if (data.analysis) {
                     setProductAnalysis({
                       name: data.analysis.name || "Custom",

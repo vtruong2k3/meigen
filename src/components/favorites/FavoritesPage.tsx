@@ -11,6 +11,8 @@ import Masonry from "react-masonry-css";
 interface FavoritesPageProps {
   onBack: () => void;
   favoritePrompts: TrendingPrompt[];
+  /** True while /api/trending/bulk is fetching prompt details for favorited IDs */
+  isLoadingPrompts?: boolean;
   onToggleFavorite: (promptId: string) => void;
   onSelectPrompt: (prompt: TrendingPrompt) => void;
 }
@@ -20,6 +22,7 @@ const tabs = ["All", "Posts", "Creations"] as const;
 export function FavoritesPage({
   onBack,
   favoritePrompts,
+  isLoadingPrompts = false,
   onToggleFavorite,
   onSelectPrompt,
 }: FavoritesPageProps) {
@@ -66,7 +69,20 @@ export function FavoritesPage({
         </div>
 
         {/* Content */}
-        {favoritePrompts.length > 0 ? (
+        {isLoadingPrompts ? (
+          /* Skeleton shimmer while bulk-fetch is running */
+          <div className="flex-1 overflow-y-auto">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="animate-pulse rounded-xl bg-muted"
+                  style={{ height: i % 3 === 0 ? 280 : i % 3 === 1 ? 220 : 250 }}
+                />
+              ))}
+            </div>
+          </div>
+        ) : favoritePrompts.length > 0 ? (
           <div className="flex-1 overflow-y-auto">
             <Masonry
               breakpointCols={{ default: 4, 1280: 3, 1024: 3, 640: 2 }}

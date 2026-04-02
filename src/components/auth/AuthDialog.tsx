@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Loader2, Eye, EyeOff } from "lucide-react";
 import { GoogleGIcon } from "@/components/common/icons";
 import { toast } from "sonner";
+import * as authService from "@/services/auth.service";
 
 import {
   Dialog,
@@ -80,22 +81,11 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
 
   const onRegister = async (data: RegisterValues) => {
     try {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: data.name,
-          email: data.email,
-          password: data.password,
-        }),
+      await authService.register({
+        name: data.name,
+        email: data.email,
+        password: data.password,
       });
-
-      const json = await res.json();
-
-      if (!res.ok) {
-        toast.error(json.error || "Registration failed");
-        return;
-      }
 
       // Auto sign-in after registration
       const result = await signIn("credentials", {
@@ -164,9 +154,13 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
             {/* Google sign-in */}
             <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} className="mb-1">
               <Button
+                type="button"
                 variant="outline"
                 className="w-full h-[52px] rounded-full text-sm font-medium gap-3"
-                onClick={() => toast.info("Google sign-in coming soon!")}
+                onClick={() => {
+                  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+                  window.location.href = `${apiUrl}/api/auth/google`;
+                }}
               >
                 <GoogleGIcon />
                 Continue with Google

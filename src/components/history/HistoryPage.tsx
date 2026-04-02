@@ -18,6 +18,8 @@ type HistoryTab = "viewed" | "generations";
 interface HistoryPageProps {
   onBack: () => void;
   historyPrompts: TrendingPrompt[];
+  /** True while /api/trending/bulk is fetching prompt details for viewed IDs */
+  isLoadingPrompts?: boolean;
   onClearHistory: () => void;
   onSelectPrompt: (prompt: TrendingPrompt) => void;
   generations: GenerationHistoryItem[];
@@ -66,6 +68,7 @@ function CircularProgress({ value, size = 56 }: { value: number; size?: number }
 export function HistoryPage({
   onBack,
   historyPrompts,
+  isLoadingPrompts = false,
   onClearHistory,
   onSelectPrompt,
   generations,
@@ -276,7 +279,18 @@ export function HistoryPage({
           {/* Viewed tab */}
           {tab === "viewed" && (
             <>
-              {historyPrompts.length > 0 ? (
+              {isLoadingPrompts ? (
+                /* Skeleton shimmer while bulk-fetch is running */
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-4">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="animate-pulse rounded-xl bg-muted"
+                      style={{ height: i % 3 === 0 ? 280 : i % 3 === 1 ? 220 : 250 }}
+                    />
+                  ))}
+                </div>
+              ) : historyPrompts.length > 0 ? (
                 <Masonry
                   breakpointCols={{ default: 4, 1280: 3, 1024: 3, 640: 2 }}
                   className="masonry-grid"

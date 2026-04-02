@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, X } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { trendingPrompts } from "@/lib/mock-data";
 import Image from "next/image";
 import type { TrendingPrompt } from "@/types";
+import { useTrending } from "@/hooks/use-trending";
 
 interface SearchDialogProps {
   open: boolean;
@@ -21,23 +21,33 @@ export function SearchDialog({ open, onOpenChange, onSelectPrompt }: SearchDialo
   const [query, setQuery] = useState("");
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>("Posts");
 
-  // Filter based on search query
-  const results = useMemo(() => {
-    if (!query.trim()) {
-      // Show recent posts when no query
-      return trendingPrompts.slice(0, 16);
-    }
-    const q = query.toLowerCase();
-    return trendingPrompts
-      .filter(
-        (p) =>
-          p.prompt.toLowerCase().includes(q) ||
-          p.author_name.toLowerCase().includes(q) ||
-          p.author.toLowerCase().includes(q) ||
-          p.categories.some((c) => c.toLowerCase().includes(q))
-      )
-      .slice(0, 20);
-  }, [query]);
+  // Fetch from BE — pass search term when user types
+  const { prompts: rawResults, isLoading } = useTrending({
+    page: 1,
+    limit: query.trim() ? 20 : 16,
+    search: query.trim() || undefined,
+    sortBy: "rank",
+    order: "desc",
+  });
+
+  // Adapt BE prompts to FE TrendingPrompt shape
+  const results: TrendingPrompt[] = rawResults.map((p) => ({
+    id: p.id,
+    rank: p.rank,
+    prompt: p.prompt,
+    author: p.author,
+    author_name: p.author_name,
+    likes: p.likes,
+    views: p.views,
+    image: p.image,
+    images: p.images,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    model: p.model as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    categories: p.categories as any,
+    date: p.date,
+    source_url: p.source_url ?? "",
+  }));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -129,8 +139,17 @@ export function SearchDialog({ open, onOpenChange, onSelectPrompt }: SearchDialo
             </motion.div>
           </AnimatePresence>
 
+          {/* Loading state */}
+          {isLoading && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="aspect-square rounded-xl bg-muted animate-pulse" />
+              ))}
+            </div>
+          )}
+
           {/* No results */}
-          {results.length === 0 && query.trim() && (
+          {!isLoading && results.length === 0 && query.trim() && (
             <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
               <Search className="w-10 h-10 mb-3 opacity-30" />
               <p className="text-sm font-medium">No results found</p>

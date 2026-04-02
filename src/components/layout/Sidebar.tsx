@@ -1,7 +1,6 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { categoryItems } from "@/lib/mock-data";
 import { useTheme } from "next-themes";
 import { useSession, signOut } from "next-auth/react";
 import {
@@ -20,9 +19,17 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
+export interface CategoryItem {
+  id: string;
+  label: string;
+  /** Value sent to backend ?category= filter query param */
+  categoryValue?: string;
+}
+
 interface SidebarProps {
   activeCategory: string;
   currentView: string;
+  categoryItems: CategoryItem[];
   onCategoryChange: (id: string) => void;
   onGetStarted?: () => void;
   onSearch?: () => void;
@@ -31,7 +38,7 @@ interface SidebarProps {
   onFavorites?: () => void;
 }
 
-export function Sidebar({ activeCategory, currentView, onCategoryChange, onGetStarted, onSearch, onHome, onHistory, onFavorites }: SidebarProps) {
+export function Sidebar({ activeCategory, currentView, categoryItems, onCategoryChange, onGetStarted, onSearch, onHome, onHistory, onFavorites }: SidebarProps) {
   const [tagsOpen, setTagsOpen] = useState(true);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);

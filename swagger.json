@@ -1,0 +1,940 @@
+﻿{
+    "openapi":  "3.0.0",
+    "paths":  {
+                  "/api/auth/register":  {
+                                             "post":  {
+                                                          "operationId":  "AuthController_register",
+                                                          "parameters":  [
+
+                                                                         ],
+                                                          "requestBody":  {
+                                                                              "required":  true,
+                                                                              "content":  {
+                                                                                              "application/json":  {
+                                                                                                                       "schema":  {
+                                                                                                                                      "$ref":  "#/components/schemas/RegisterDto"
+                                                                                                                                  }
+                                                                                                                   }
+                                                                                          }
+                                                                          },
+                                                          "responses":  {
+                                                                            "201":  {
+                                                                                        "description":  ""
+                                                                                    }
+                                                                        },
+                                                          "summary":  "Register a new user with email \u0026 password",
+                                                          "tags":  [
+                                                                       "auth"
+                                                                   ]
+                                                      }
+                                         },
+                  "/api/auth/login":  {
+                                          "post":  {
+                                                       "operationId":  "AuthController_login",
+                                                       "parameters":  [
+
+                                                                      ],
+                                                       "requestBody":  {
+                                                                           "required":  true,
+                                                                           "content":  {
+                                                                                           "application/json":  {
+                                                                                                                    "schema":  {
+                                                                                                                                   "$ref":  "#/components/schemas/LoginDto"
+                                                                                                                               }
+                                                                                                                }
+                                                                                       }
+                                                                       },
+                                                       "responses":  {
+                                                                         "200":  {
+                                                                                     "description":  ""
+                                                                                 }
+                                                                     },
+                                                       "summary":  "Login with email \u0026 password",
+                                                       "tags":  [
+                                                                    "auth"
+                                                                ]
+                                                   }
+                                      },
+                  "/api/auth/refresh":  {
+                                            "post":  {
+                                                         "operationId":  "AuthController_refresh",
+                                                         "parameters":  [
+
+                                                                        ],
+                                                         "responses":  {
+                                                                           "200":  {
+                                                                                       "description":  ""
+                                                                                   }
+                                                                       },
+                                                         "summary":  "Refresh access token via HttpOnly cookie",
+                                                         "tags":  [
+                                                                      "auth"
+                                                                  ]
+                                                     }
+                                        },
+                  "/api/auth/logout":  {
+                                           "post":  {
+                                                        "operationId":  "AuthController_logout",
+                                                        "parameters":  [
+
+                                                                       ],
+                                                        "responses":  {
+                                                                          "200":  {
+                                                                                      "description":  ""
+                                                                                  }
+                                                                      },
+                                                        "summary":  "Logout — clears HttpOnly cookie",
+                                                        "tags":  [
+                                                                     "auth"
+                                                                 ]
+                                                    }
+                                       },
+                  "/api/auth/google":  {
+                                           "get":  {
+                                                       "operationId":  "AuthController_googleLogin",
+                                                       "parameters":  [
+
+                                                                      ],
+                                                       "responses":  {
+                                                                         "200":  {
+                                                                                     "description":  ""
+                                                                                 }
+                                                                     },
+                                                       "summary":  "Redirect to Google OAuth consent screen",
+                                                       "tags":  [
+                                                                    "auth"
+                                                                ]
+                                                   }
+                                       },
+                  "/api/favorites":  {
+                                         "get":  {
+                                                     "operationId":  "FavoritesController_getFavorites",
+                                                     "parameters":  [
+
+                                                                    ],
+                                                     "responses":  {
+                                                                       "200":  {
+                                                                                   "description":  ""
+                                                                               }
+                                                                   },
+                                                     "security":  [
+                                                                      {
+                                                                          "bearer":  [
+
+                                                                                     ]
+                                                                      }
+                                                                  ],
+                                                     "summary":  "Get all favorites for current user",
+                                                     "tags":  [
+                                                                  "favorites"
+                                                              ]
+                                                 },
+                                         "post":  {
+                                                      "operationId":  "FavoritesController_addFavorite",
+                                                      "parameters":  [
+
+                                                                     ],
+                                                      "requestBody":  {
+                                                                          "required":  true,
+                                                                          "content":  {
+                                                                                          "application/json":  {
+                                                                                                                   "schema":  {
+                                                                                                                                  "$ref":  "#/components/schemas/CreateFavoriteDto"
+                                                                                                                              }
+                                                                                                               }
+                                                                                      }
+                                                                      },
+                                                      "responses":  {
+                                                                        "201":  {
+                                                                                    "description":  ""
+                                                                                }
+                                                                    },
+                                                      "security":  [
+                                                                       {
+                                                                           "bearer":  [
+
+                                                                                      ]
+                                                                       }
+                                                                   ],
+                                                      "summary":  "Add a prompt to favorites (upsert)",
+                                                      "tags":  [
+                                                                   "favorites"
+                                                               ]
+                                                  },
+                                         "delete":  {
+                                                        "operationId":  "FavoritesController_removeFavorite",
+                                                        "parameters":  [
+                                                                           {
+                                                                               "name":  "promptId",
+                                                                               "required":  true,
+                                                                               "in":  "query",
+                                                                               "schema":  {
+                                                                                              "type":  "string"
+                                                                                          }
+                                                                           }
+                                                                       ],
+                                                        "responses":  {
+                                                                          "200":  {
+                                                                                      "description":  ""
+                                                                                  }
+                                                                      },
+                                                        "security":  [
+                                                                         {
+                                                                             "bearer":  [
+
+                                                                                        ]
+                                                                         }
+                                                                     ],
+                                                        "summary":  "Remove a prompt from favorites",
+                                                        "tags":  [
+                                                                     "favorites"
+                                                                 ]
+                                                    }
+                                     },
+                  "/api/history":  {
+                                       "get":  {
+                                                   "operationId":  "HistoryController_getHistory",
+                                                   "parameters":  [
+
+                                                                  ],
+                                                   "responses":  {
+                                                                     "200":  {
+                                                                                 "description":  ""
+                                                                             }
+                                                                 },
+                                                   "security":  [
+                                                                    {
+                                                                        "bearer":  [
+
+                                                                                   ]
+                                                                    }
+                                                                ],
+                                                   "summary":  "Get view history (max 100)",
+                                                   "tags":  [
+                                                                "history"
+                                                            ]
+                                               },
+                                       "post":  {
+                                                    "operationId":  "HistoryController_addHistory",
+                                                    "parameters":  [
+
+                                                                   ],
+                                                    "requestBody":  {
+                                                                        "required":  true,
+                                                                        "content":  {
+                                                                                        "application/json":  {
+                                                                                                                 "schema":  {
+                                                                                                                                "$ref":  "#/components/schemas/AddHistoryDto"
+                                                                                                                            }
+                                                                                                             }
+                                                                                    }
+                                                                    },
+                                                    "responses":  {
+                                                                      "201":  {
+                                                                                  "description":  ""
+                                                                              }
+                                                                  },
+                                                    "security":  [
+                                                                     {
+                                                                         "bearer":  [
+
+                                                                                    ]
+                                                                     }
+                                                                 ],
+                                                    "summary":  "Track a prompt view (upsert)",
+                                                    "tags":  [
+                                                                 "history"
+                                                             ]
+                                                },
+                                       "delete":  {
+                                                      "operationId":  "HistoryController_clearHistory",
+                                                      "parameters":  [
+
+                                                                     ],
+                                                      "responses":  {
+                                                                        "200":  {
+                                                                                    "description":  ""
+                                                                                }
+                                                                    },
+                                                      "security":  [
+                                                                       {
+                                                                           "bearer":  [
+
+                                                                                      ]
+                                                                       }
+                                                                   ],
+                                                      "summary":  "Clear all view history",
+                                                      "tags":  [
+                                                                   "history"
+                                                               ]
+                                                  }
+                                   },
+                  "/api/generations":  {
+                                           "get":  {
+                                                       "operationId":  "GenerationsController_getGenerations",
+                                                       "parameters":  [
+
+                                                                      ],
+                                                       "responses":  {
+                                                                         "200":  {
+                                                                                     "description":  ""
+                                                                                 }
+                                                                     },
+                                                       "security":  [
+                                                                        {
+                                                                            "bearer":  [
+
+                                                                                       ]
+                                                                        }
+                                                                    ],
+                                                       "summary":  "Get generation history (max 50)",
+                                                       "tags":  [
+                                                                    "generations"
+                                                                ]
+                                                   },
+                                           "post":  {
+                                                        "operationId":  "GenerationsController_createGeneration",
+                                                        "parameters":  [
+
+                                                                       ],
+                                                        "requestBody":  {
+                                                                            "required":  true,
+                                                                            "content":  {
+                                                                                            "application/json":  {
+                                                                                                                     "schema":  {
+                                                                                                                                    "$ref":  "#/components/schemas/CreateGenerationDto"
+                                                                                                                                }
+                                                                                                                 }
+                                                                                        }
+                                                                        },
+                                                        "responses":  {
+                                                                          "201":  {
+                                                                                      "description":  ""
+                                                                                  }
+                                                                      },
+                                                        "security":  [
+                                                                         {
+                                                                             "bearer":  [
+
+                                                                                        ]
+                                                                         }
+                                                                     ],
+                                                        "summary":  "Create new generation record",
+                                                        "tags":  [
+                                                                     "generations"
+                                                                 ]
+                                                    },
+                                           "patch":  {
+                                                         "operationId":  "GenerationsController_updateGeneration",
+                                                         "parameters":  [
+
+                                                                        ],
+                                                         "requestBody":  {
+                                                                             "required":  true,
+                                                                             "content":  {
+                                                                                             "application/json":  {
+                                                                                                                      "schema":  {
+                                                                                                                                     "$ref":  "#/components/schemas/UpdateGenerationDto"
+                                                                                                                                 }
+                                                                                                                  }
+                                                                                         }
+                                                                         },
+                                                         "responses":  {
+                                                                           "200":  {
+                                                                                       "description":  ""
+                                                                                   }
+                                                                       },
+                                                         "security":  [
+                                                                          {
+                                                                              "bearer":  [
+
+                                                                                         ]
+                                                                          }
+                                                                      ],
+                                                         "summary":  "Update generation status/progress/imageUrl (partial)",
+                                                         "tags":  [
+                                                                      "generations"
+                                                                  ]
+                                                     },
+                                           "delete":  {
+                                                          "operationId":  "GenerationsController_clearGenerations",
+                                                          "parameters":  [
+
+                                                                         ],
+                                                          "responses":  {
+                                                                            "200":  {
+                                                                                        "description":  ""
+                                                                                    }
+                                                                        },
+                                                          "security":  [
+                                                                           {
+                                                                               "bearer":  [
+
+                                                                                          ]
+                                                                           }
+                                                                       ],
+                                                          "summary":  "Clear all generation history",
+                                                          "tags":  [
+                                                                       "generations"
+                                                                   ]
+                                                      }
+                                       },
+                  "/api/ai/generate":  {
+                                           "post":  {
+                                                        "operationId":  "GenerateController_generate",
+                                                        "parameters":  [
+
+                                                                       ],
+                                                        "responses":  {
+                                                                          "201":  {
+                                                                                      "description":  ""
+                                                                                  }
+                                                                      },
+                                                        "security":  [
+                                                                         {
+                                                                             "bearer":  [
+
+                                                                                        ]
+                                                                         }
+                                                                     ],
+                                                        "summary":  "Generate image (Seedream sync or ChainHub async)",
+                                                        "tags":  [
+                                                                     "ai"
+                                                                 ]
+                                                    }
+                                       },
+                  "/api/ai/generate/{taskId}":  {
+                                                    "get":  {
+                                                                "operationId":  "GenerateController_pollTask",
+                                                                "parameters":  [
+                                                                                   {
+                                                                                       "name":  "taskId",
+                                                                                       "required":  true,
+                                                                                       "in":  "path",
+                                                                                       "schema":  {
+                                                                                                      "type":  "string"
+                                                                                                  }
+                                                                                   }
+                                                                               ],
+                                                                "responses":  {
+                                                                                  "200":  {
+                                                                                              "description":  ""
+                                                                                          }
+                                                                              },
+                                                                "security":  [
+                                                                                 {
+                                                                                     "bearer":  [
+
+                                                                                                ]
+                                                                                 }
+                                                                             ],
+                                                                "summary":  "Poll ChainHub task status",
+                                                                "tags":  [
+                                                                             "ai"
+                                                                         ]
+                                                            }
+                                                },
+                  "/api/ai/enhance":  {
+                                          "post":  {
+                                                       "operationId":  "EnhanceController_enhance",
+                                                       "parameters":  [
+
+                                                                      ],
+                                                       "requestBody":  {
+                                                                           "required":  true,
+                                                                           "content":  {
+                                                                                           "application/json":  {
+                                                                                                                    "schema":  {
+                                                                                                                                   "$ref":  "#/components/schemas/EnhanceDto"
+                                                                                                                               }
+                                                                                                                }
+                                                                                       }
+                                                                       },
+                                                       "responses":  {
+                                                                         "201":  {
+                                                                                     "description":  ""
+                                                                                 }
+                                                                     },
+                                                       "security":  [
+                                                                        {
+                                                                            "bearer":  [
+
+                                                                                       ]
+                                                                        }
+                                                                    ],
+                                                       "summary":  "Enhance a simple prompt using GPT-4o (3 styles)",
+                                                       "tags":  [
+                                                                    "ai"
+                                                                ]
+                                                   }
+                                      },
+                  "/api/ai/describe":  {
+                                           "post":  {
+                                                        "operationId":  "DescribeController_describe",
+                                                        "parameters":  [
+
+                                                                       ],
+                                                        "requestBody":  {
+                                                                            "required":  true,
+                                                                            "content":  {
+                                                                                            "application/json":  {
+                                                                                                                     "schema":  {
+                                                                                                                                    "$ref":  "#/components/schemas/DescribeDto"
+                                                                                                                                }
+                                                                                                                 }
+                                                                                        }
+                                                                        },
+                                                        "responses":  {
+                                                                          "201":  {
+                                                                                      "description":  ""
+                                                                                  }
+                                                                      },
+                                                        "security":  [
+                                                                         {
+                                                                             "bearer":  [
+
+                                                                                        ]
+                                                                         }
+                                                                     ],
+                                                        "summary":  "Reverse-engineer an image URL into a detailed prompt (Vision AI)",
+                                                        "tags":  [
+                                                                     "ai"
+                                                                 ]
+                                                    }
+                                       },
+                  "/api/ai/analyze-product":  {
+                                                  "post":  {
+                                                               "description":  "Mode 1: imageUrl only → returns analysis. Mode 2: imageUrl + templatePrompt → returns analysis + adaptedPrompt. Mode 3: manualFields + templatePrompt → returns adaptedPrompt.",
+                                                               "operationId":  "AnalyzeProductController_analyzeProduct",
+                                                               "parameters":  [
+
+                                                                              ],
+                                                               "requestBody":  {
+                                                                                   "required":  true,
+                                                                                   "content":  {
+                                                                                                   "application/json":  {
+                                                                                                                            "schema":  {
+                                                                                                                                           "$ref":  "#/components/schemas/AnalyzeProductDto"
+                                                                                                                                       }
+                                                                                                                        }
+                                                                                               }
+                                                                               },
+                                                               "responses":  {
+                                                                                 "201":  {
+                                                                                             "description":  ""
+                                                                                         }
+                                                                             },
+                                                               "security":  [
+                                                                                {
+                                                                                    "bearer":  [
+
+                                                                                               ]
+                                                                                }
+                                                                            ],
+                                                               "summary":  "Analyze product image and optionally adapt a template prompt",
+                                                               "tags":  [
+                                                                            "ai"
+                                                                        ]
+                                                           }
+                                              },
+                  "/api/ai/extract-fields":  {
+                                                 "post":  {
+                                                              "operationId":  "ExtractFieldsController_extractFields",
+                                                              "parameters":  [
+
+                                                                             ],
+                                                              "requestBody":  {
+                                                                                  "required":  true,
+                                                                                  "content":  {
+                                                                                                  "application/json":  {
+                                                                                                                           "schema":  {
+                                                                                                                                          "$ref":  "#/components/schemas/ExtractFieldsDto"
+                                                                                                                                      }
+                                                                                                                       }
+                                                                                              }
+                                                                              },
+                                                              "responses":  {
+                                                                                "201":  {
+                                                                                            "description":  ""
+                                                                                        }
+                                                                            },
+                                                              "security":  [
+                                                                               {
+                                                                                   "bearer":  [
+
+                                                                                              ]
+                                                                               }
+                                                                           ],
+                                                              "summary":  "Extract editable fields from a template prompt",
+                                                              "tags":  [
+                                                                           "ai"
+                                                                       ]
+                                                          }
+                                             },
+                  "/api/trending":  {
+                                        "get":  {
+                                                    "description":  "Returns trending AI prompts from the community. Supports filtering by category, model, and full-text search.",
+                                                    "operationId":  "TrendingPromptsController_findAll",
+                                                    "parameters":  [
+                                                                       {
+                                                                           "name":  "page",
+                                                                           "required":  false,
+                                                                           "in":  "query",
+                                                                           "schema":  {
+                                                                                          "example":  1,
+                                                                                          "type":  "number"
+                                                                                      }
+                                                                       },
+                                                                       {
+                                                                           "name":  "limit",
+                                                                           "required":  false,
+                                                                           "in":  "query",
+                                                                           "schema":  {
+                                                                                          "example":  20,
+                                                                                          "type":  "number"
+                                                                                      }
+                                                                       },
+                                                                       {
+                                                                           "name":  "category",
+                                                                           "required":  false,
+                                                                           "in":  "query",
+                                                                           "schema":  {
+                                                                                          "example":  "Girl",
+                                                                                          "type":  "string"
+                                                                                      }
+                                                                       },
+                                                                       {
+                                                                           "name":  "model",
+                                                                           "required":  false,
+                                                                           "in":  "query",
+                                                                           "schema":  {
+                                                                                          "example":  "nanobanana",
+                                                                                          "type":  "string"
+                                                                                      }
+                                                                       },
+                                                                       {
+                                                                           "name":  "search",
+                                                                           "required":  false,
+                                                                           "in":  "query",
+                                                                           "schema":  {
+                                                                                          "type":  "string"
+                                                                                      }
+                                                                       },
+                                                                       {
+                                                                           "name":  "sortBy",
+                                                                           "required":  false,
+                                                                           "in":  "query",
+                                                                           "schema":  {
+                                                                                          "enum":  [
+                                                                                                       "likes",
+                                                                                                       "views",
+                                                                                                       "rank",
+                                                                                                       "date"
+                                                                                                   ],
+                                                                                          "type":  "string"
+                                                                                      }
+                                                                       },
+                                                                       {
+                                                                           "name":  "order",
+                                                                           "required":  false,
+                                                                           "in":  "query",
+                                                                           "schema":  {
+                                                                                          "enum":  [
+                                                                                                       "asc",
+                                                                                                       "desc"
+                                                                                                   ],
+                                                                                          "type":  "string"
+                                                                                      }
+                                                                       }
+                                                                   ],
+                                                    "responses":  {
+                                                                      "200":  {
+                                                                                  "description":  ""
+                                                                              }
+                                                                  },
+                                                    "summary":  "Get trending prompts (paginated, filterable)",
+                                                    "tags":  [
+                                                                 "trending"
+                                                             ]
+                                                }
+                                    },
+                  "/api/trending/meta":  {
+                                             "get":  {
+                                                         "operationId":  "TrendingPromptsController_getMeta",
+                                                         "parameters":  [
+
+                                                                        ],
+                                                         "responses":  {
+                                                                           "200":  {
+                                                                                       "description":  ""
+                                                                                   }
+                                                                       },
+                                                         "summary":  "Get available categories and models for filtering",
+                                                         "tags":  [
+                                                                      "trending"
+                                                                  ]
+                                                     }
+                                         },
+                  "/api/trending/{id}":  {
+                                             "get":  {
+                                                         "operationId":  "TrendingPromptsController_findOne",
+                                                         "parameters":  [
+                                                                            {
+                                                                                "name":  "id",
+                                                                                "required":  true,
+                                                                                "in":  "path",
+                                                                                "schema":  {
+                                                                                               "type":  "string"
+                                                                                           }
+                                                                            }
+                                                                        ],
+                                                         "responses":  {
+                                                                           "200":  {
+                                                                                       "description":  ""
+                                                                                   }
+                                                                       },
+                                                         "summary":  "Get a single trending prompt by ID",
+                                                         "tags":  [
+                                                                      "trending"
+                                                                  ]
+                                                     }
+                                         },
+                  "/api/trending/author/{author}":  {
+                                                        "get":  {
+                                                                    "operationId":  "TrendingPromptsController_findByAuthor",
+                                                                    "parameters":  [
+                                                                                       {
+                                                                                           "name":  "author",
+                                                                                           "required":  true,
+                                                                                           "in":  "path",
+                                                                                           "schema":  {
+                                                                                                          "type":  "string"
+                                                                                                      }
+                                                                                       },
+                                                                                       {
+                                                                                           "name":  "limit",
+                                                                                           "required":  false,
+                                                                                           "in":  "query",
+                                                                                           "schema":  {
+                                                                                                          "example":  10,
+                                                                                                          "type":  "number"
+                                                                                                      }
+                                                                                       }
+                                                                                   ],
+                                                                    "responses":  {
+                                                                                      "200":  {
+                                                                                                  "description":  ""
+                                                                                              }
+                                                                                  },
+                                                                    "summary":  "Get prompts from a specific author",
+                                                                    "tags":  [
+                                                                                 "trending"
+                                                                             ]
+                                                                }
+                                                    }
+              },
+    "info":  {
+                 "title":  "LuminaGen API",
+                 "description":  "Backend API for LuminaGen — AI Image Generation Platform",
+                 "version":  "1.0",
+                 "contact":  {
+
+                             }
+             },
+    "tags":  [
+
+             ],
+    "servers":  [
+
+                ],
+    "components":  {
+                       "securitySchemes":  {
+                                               "access-token":  {
+                                                                    "scheme":  "bearer",
+                                                                    "bearerFormat":  "JWT",
+                                                                    "type":  "http"
+                                                                },
+                                               "cookie":  {
+                                                              "type":  "apiKey",
+                                                              "in":  "cookie",
+                                                              "name":  "refresh_token"
+                                                          }
+                                           },
+                       "schemas":  {
+                                       "RegisterDto":  {
+                                                           "type":  "object",
+                                                           "properties":  {
+                                                                              "email":  {
+                                                                                            "type":  "string",
+                                                                                            "example":  "user@example.com"
+                                                                                        },
+                                                                              "password":  {
+                                                                                               "type":  "string",
+                                                                                               "example":  "MyPassword123",
+                                                                                               "minLength":  6
+                                                                                           },
+                                                                              "name":  {
+                                                                                           "type":  "string",
+                                                                                           "example":  "John Doe"
+                                                                                       }
+                                                                          },
+                                                           "required":  [
+                                                                            "email",
+                                                                            "password",
+                                                                            "name"
+                                                                        ]
+                                                       },
+                                       "LoginDto":  {
+                                                        "type":  "object",
+                                                        "properties":  {
+                                                                           "email":  {
+                                                                                         "type":  "string",
+                                                                                         "example":  "user@example.com"
+                                                                                     },
+                                                                           "password":  {
+                                                                                            "type":  "string",
+                                                                                            "example":  "MyPassword123"
+                                                                                        }
+                                                                       },
+                                                        "required":  [
+                                                                         "email",
+                                                                         "password"
+                                                                     ]
+                                                    },
+                                       "CreateFavoriteDto":  {
+                                                                 "type":  "object",
+                                                                 "properties":  {
+                                                                                    "promptId":  {
+                                                                                                     "type":  "string",
+                                                                                                     "example":  "prompt_123"
+                                                                                                 }
+                                                                                },
+                                                                 "required":  [
+                                                                                  "promptId"
+                                                                              ]
+                                                             },
+                                       "AddHistoryDto":  {
+                                                             "type":  "object",
+                                                             "properties":  {
+                                                                                "promptId":  {
+                                                                                                 "type":  "string",
+                                                                                                 "example":  "prompt_123"
+                                                                                             }
+                                                                            },
+                                                             "required":  [
+                                                                              "promptId"
+                                                                          ]
+                                                         },
+                                       "CreateGenerationDto":  {
+                                                                   "type":  "object",
+                                                                   "properties":  {
+                                                                                      "taskId":  {
+                                                                                                     "type":  "string"
+                                                                                                 },
+                                                                                      "prompt":  {
+                                                                                                     "type":  "string"
+                                                                                                 },
+                                                                                      "width":  {
+                                                                                                    "type":  "number"
+                                                                                                },
+                                                                                      "height":  {
+                                                                                                     "type":  "number"
+                                                                                                 },
+                                                                                      "quality":  {
+                                                                                                      "type":  "string"
+                                                                                                  }
+                                                                                  },
+                                                                   "required":  [
+                                                                                    "taskId",
+                                                                                    "prompt"
+                                                                                ]
+                                                               },
+                                       "UpdateGenerationDto":  {
+                                                                   "type":  "object",
+                                                                   "properties":  {
+                                                                                      "taskId":  {
+                                                                                                     "type":  "string"
+                                                                                                 },
+                                                                                      "status":  {
+                                                                                                     "type":  "string"
+                                                                                                 },
+                                                                                      "progress":  {
+                                                                                                       "type":  "number"
+                                                                                                   },
+                                                                                      "imageUrl":  {
+                                                                                                       "type":  "string"
+                                                                                                   },
+                                                                                      "totalTime":  {
+                                                                                                        "type":  "number"
+                                                                                                    },
+                                                                                      "error":  {
+                                                                                                    "type":  "string"
+                                                                                                }
+                                                                                  },
+                                                                   "required":  [
+                                                                                    "taskId"
+                                                                                ]
+                                                               },
+                                       "EnhanceDto":  {
+                                                          "type":  "object",
+                                                          "properties":  {
+                                                                             "prompt":  {
+                                                                                            "type":  "string",
+                                                                                            "example":  "a girl in a coffee shop"
+                                                                                        },
+                                                                             "style":  {
+                                                                                           "type":  "string",
+                                                                                           "enum":  [
+                                                                                                        "realistic",
+                                                                                                        "anime",
+                                                                                                        "illustration"
+                                                                                                    ]
+                                                                                       }
+                                                                         },
+                                                          "required":  [
+                                                                           "prompt"
+                                                                       ]
+                                                      },
+                                       "DescribeDto":  {
+                                                           "type":  "object",
+                                                           "properties":  {
+                                                                              "imageUrl":  {
+                                                                                               "type":  "string",
+                                                                                               "example":  "https://images.meigen.ai/..."
+                                                                                           }
+                                                                          },
+                                                           "required":  [
+                                                                            "imageUrl"
+                                                                        ]
+                                                       },
+                                       "AnalyzeProductDto":  {
+                                                                 "type":  "object",
+                                                                 "properties":  {
+                                                                                    "imageUrl":  {
+                                                                                                     "type":  "string",
+                                                                                                     "description":  "URL of product/food image (Mode 1 \u0026 2)"
+                                                                                                 },
+                                                                                    "templatePrompt":  {
+                                                                                                           "type":  "string",
+                                                                                                           "description":  "Template prompt to adapt (Mode 2 \u0026 3)"
+                                                                                                       },
+                                                                                    "manualFields":  {
+                                                                                                         "type":  "object",
+                                                                                                         "description":  "Manual field overrides (Mode 3)"
+                                                                                                     }
+                                                                                }
+                                                             },
+                                       "ExtractFieldsDto":  {
+                                                                "type":  "object",
+                                                                "properties":  {
+                                                                                   "templatePrompt":  {
+                                                                                                          "type":  "string"
+                                                                                                      }
+                                                                               },
+                                                                "required":  [
+                                                                                 "templatePrompt"
+                                                                             ]
+                                                            }
+                                   }
+                   }
+}

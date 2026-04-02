@@ -1,43 +1,17 @@
-import type {
-  TrendingPrompt,
-  ModelTab,
-  SortTab,
-  CategoryItem,
-  AIModel,
-} from "@/types";
+/**
+ * mock-data.ts
+ * FORMATTER UTILITIES — No mock data, no hardcoded categories/models.
+ * These helpers are shared across the app for formatting display values.
+ *
+ * Categories, Models:  fetched dynamically from /api/trending/meta via useTrendingMeta()
+ * SortTabs:            static const in HeaderTabs.tsx (UI-only, no backend dep)
+ */
+
+import type { AIModel } from "@/types";
 import { formatDistanceToNow } from "date-fns";
-import rawData from "../../data/trending-prompts.json";
 
-/** All trending prompts loaded from JSON */
-export const trendingPrompts: TrendingPrompt[] = rawData as TrendingPrompt[];
-
-/** Model filter tabs */
-export const modelTabs: ModelTab[] = [
-  { id: "all", label: "All Models" },
-  { id: "nanobanana", label: "Nanobanana Pro", modelValue: "nanobanana" },
-  { id: "gptimage", label: "Image 1.5", modelValue: "gptimage" },
-  { id: "midjourney", label: "Midjourney", modelValue: "midjourney" },
-];
-
-/** Sort options */
-export const sortTabs: SortTab[] = [
-  { id: "featured", label: "Featured" },
-  { id: "newest", label: "Newest" },
-  { id: "popular", label: "Popular" },
-];
-
-/** Category filter items for sidebar */
-export const categoryItems: CategoryItem[] = [
-  { id: "all", label: "All" },
-  { id: "product", label: "Product & Brand", categoryValue: "Product" },
-  { id: "photography", label: "Photography", categoryValue: "Photograph" },
-  { id: "illustration", label: "Illustration & 3D", categoryValue: "3D" },
-  { id: "food", label: "Food & Drink", categoryValue: "Food" },
-  { id: "girl", label: "Girl", categoryValue: "Girl" },
-];
-
-/** Model display labels */
-export const modelLabels: Record<AIModel, string> = {
+/** Model display labels — used by getModelLabel() below */
+const modelLabels: Record<AIModel, string> = {
   nanobanana: "Nanobanana Pro",
   gptimage: "Image 1.5",
   midjourney: "Midjourney",

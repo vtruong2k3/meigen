@@ -1,13 +1,27 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { modelTabs, sortTabs } from "@/lib/mock-data";
 import { GoogleGIcon } from "@/components/common/icons";
 import { Search } from "lucide-react";
+
+// Sort tabs are purely static UI — no backend dependency
+const sortTabs = [
+  { id: "featured", label: "Featured" },
+  { id: "newest", label: "Newest" },
+  { id: "popular", label: "Popular" },
+] as const;
+
+export interface ModelTab {
+  id: string;
+  label: string;
+  /** Value sent to backend ?model= filter query param */
+  modelValue?: string;
+}
 
 interface HeaderTabsProps {
   activeModel: string;
   activeSort: string;
+  modelTabs: ModelTab[];
   onModelChange: (id: string) => void;
   onSortChange: (id: string) => void;
   onSearch?: () => void;
@@ -39,6 +53,7 @@ function ModelIcon({ modelId }: { modelId: string }) {
 export function HeaderTabs({
   activeModel,
   activeSort,
+  modelTabs,
   onModelChange,
   onSortChange,
   onSearch,
